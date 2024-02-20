@@ -24,7 +24,7 @@ Welcome to Qudi IQO Modules's documentation!
     :glob:
     :caption: Development
 
-    repo_manegement/*
+    repo_management/*
     changelog
 
 

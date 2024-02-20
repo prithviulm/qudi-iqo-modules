@@ -1,4 +1,5 @@
 # qudi-iqo-modules
+[![Documentation Status](https://readthedocs.org/projects/qudi-iqo-modules/badge/?version=latest)](https://qudi-iqo-modules.readthedocs.io/en/latest/?badge=latest)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 ---

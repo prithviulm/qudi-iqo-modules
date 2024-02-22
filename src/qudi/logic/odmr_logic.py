@@ -670,7 +670,7 @@ class OdmrLogic(LogicBase):
         """
         Execute the currently configured fit on the measurement data. Optionally on passed data
         """
-        if fit_config != 'No Fit' and fit_config not in self._fit_config_model.configuration_names:
+        if fit_config != 'No Fit' and fit_config not in self._fit_config_model.configuration_names:  # Shouldn't this use the property?
             self.log.error(f'Unknown fit configuration "{fit_config}" encountered.')
             return
 

@@ -65,6 +65,22 @@ dependencies = [
     'zaber_motion>=2.14.6',
 ]
 
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+"qudi" = ["default.cfg"]
+"qudi.gui" = ["*.ui", "*/*.ui"]
+
+[tool.setuptools.include-package-data]
+include = true
+
+
 [project.optional-dependencies]
 dev-docs = [
     "Sphinx==7.2.6",

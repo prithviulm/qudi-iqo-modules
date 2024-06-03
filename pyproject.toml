@@ -77,8 +77,6 @@ where = ["src"]
 "qudi" = ["default.cfg"]
 "qudi.gui" = ["*.ui", "*/*.ui"]
 
-[tool.setuptools.include-package-data]
-include = true
 
 
 [project.optional-dependencies]

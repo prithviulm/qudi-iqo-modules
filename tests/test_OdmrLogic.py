@@ -36,7 +36,7 @@ MODULE = 'odmr_logic'
 BASE = 'logic'
 CHANNELS = ('APD counts', 'Photodiode')
 FIT_MODEL = 'Gaussian Dip'
-TOLERANCE = 10
+TOLERANCE = 10 # tolerance for signal data range
 
 @pytest.fixture(scope="module")
 def qt_app():
@@ -61,17 +61,12 @@ def config():
     return configuration
 
 
-@pytest.fixture(scope="module")
-def module_manager(qudi_instance, config):
-    manager =  qudi_instance.module_manager
+@pytest.fixture(scope='module')
+def module(qudi_instance, config):
+    module_manager =  qudi_instance.module_manager
     for base in ['logic', 'hardware']:
         for module_name, module_cfg in list(config[base].items()):
-            manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
-    return manager
-
-
-@pytest.fixture(scope='module')
-def module(module_manager):
+            module_manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
     module = module_manager.modules[MODULE]
     module.activate()
     return module.instance
@@ -124,7 +119,6 @@ def test_start_odmr_scan(module, scanner, qtbot):
     qtbot : fixture
         Fixture for qt support
     """    
-
     freq_low, freq_high, freq_counts = list(map(int, module.frequency_ranges[0]))
     frequency_data = module.frequency_data
     assert len(frequency_data) == module.frequency_range_count
@@ -172,18 +166,34 @@ def test_do_fit(module):
 
 def test_save_odmr_data(module):
     """This tests whether new files were saved in the save dir 
-    after executing the svae function
+    after executing the svae function and compares the data
 
     Parameters
     ----------
     module : fixture
         Fixture for instance of Odmr logic module
-    """    
-    module.save_odmr_data()
+    """  
     save_dir = module.module_default_data_dir
     saved_files = os.listdir(save_dir)
     saved_files = [os.path.join(save_dir, file) for file in saved_files]
     creation_times = np.array([os.path.getmtime(file) for file in saved_files])
     current_time = time.time()
-    time_diff = creation_times - current_time
-    assert(any(time_diff<5))
+    time_diffs =   current_time - creation_times
+    assert(not any(time_diffs<5)) # no files should be created in the last 5 secs before saving
+    
+    module.save_odmr_data()
+    
+    saved_files = os.listdir(save_dir)
+    saved_files = [os.path.join(save_dir, file) for file in saved_files]
+    creation_times = np.array([os.path.getmtime(file) for file in saved_files])
+    current_time = time.time()
+    time_diffs = current_time - creation_times
+    recent_saved_files = [saved_file for saved_file,time_diff in zip(saved_files, time_diffs) if time_diff<5]
+    data_files = [recent_saved_file for recent_saved_file in recent_saved_files if os.path.splitext(recent_saved_file)[1] == '.dat']
+    signal_data_file = [data_file for data_file in data_files if 'signal' in data_file][0]
+    saved_signal_data = np.loadtxt(signal_data_file)
+    for i,channel in enumerate(CHANNELS):
+        saved_channel_data = [saved_signal_row[i+1]  for saved_signal_row in saved_signal_data]
+        actual_channel_data = module.signal_data[channel][0]
+        for saved_value, actual_value in zip(saved_channel_data, actual_channel_data):
+            assert np.isclose(saved_value, actual_value)

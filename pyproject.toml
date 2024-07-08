@@ -89,7 +89,7 @@ dev-docs = [
 
 dev-lint-format = ["ruff==0.2.1"]
 
-dev-test = ["pytest==8.0.1", "pytest-qt"]
+dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 # "sphinx-book-theme==1.1.1"
 # nbsphinx = "^0.8.8"

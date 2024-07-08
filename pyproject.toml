@@ -65,6 +65,20 @@ dependencies = [
     'zaber_motion>=2.14.6',
 ]
 
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+"qudi" = ["default.cfg"]
+"qudi.gui" = ["*.ui", "*/*.ui"]
+
+
+
 [project.optional-dependencies]
 dev-docs = [
     "Sphinx==7.2.6",
@@ -75,7 +89,7 @@ dev-docs = [
 
 dev-lint-format = ["ruff==0.2.1"]
 
-dev-test = ["pytest==8.0.1"]
+dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 # "sphinx-book-theme==1.1.1"
 # nbsphinx = "^0.8.8"

@@ -31,34 +31,14 @@ import coverage
 import time
 import math
 
-CONFIG = 'C:/qudi/default.cfg'
 MODULE = 'odmr_logic'
 BASE = 'logic'
 CHANNELS = ('APD counts', 'Photodiode')
 FIT_MODEL = 'Gaussian Dip'
 TOLERANCE = 10 # tolerance for signal data range
 
-@pytest.fixture(scope="module")
-def qt_app():
-    app_cls = QtWidgets.QApplication
-    app = app_cls.instance()
-    if app is None:
-        app = app_cls()
-    return app
-
-@pytest.fixture(scope="module")
-def qudi_instance(qt_app):
-    instance = application.Qudi.instance()
-    if instance is None:
-        instance = application.Qudi(config_file=CONFIG)
-    instance_weak = weakref.ref(instance)
-    return instance_weak()
 
 
-@pytest.fixture(scope='module')
-def config():
-    configuration = (yaml_load(CONFIG))
-    return configuration
 
 
 @pytest.fixture(scope='module')
@@ -174,13 +154,14 @@ def test_save_odmr_data(module):
         Fixture for instance of Odmr logic module
     """  
     save_dir = module.module_default_data_dir
-    saved_files = os.listdir(save_dir)
-    saved_files = [os.path.join(save_dir, file) for file in saved_files]
-    creation_times = np.array([os.path.getmtime(file) for file in saved_files])
-    current_time = time.time()
-    time_diffs =   current_time - creation_times
-    assert(not any(time_diffs<5)) # no files should be created in the last 5 secs before saving
-    
+    if os.path.exists(save_dir):
+        saved_files = os.listdir(save_dir)
+        saved_files = [os.path.join(save_dir, file) for file in saved_files]
+        creation_times = np.array([os.path.getmtime(file) for file in saved_files])
+        current_time = time.time()
+        time_diffs =   current_time - creation_times
+        assert(not any(time_diffs<5)) # no files should be created in the last 5 secs before saving
+        
     module.save_odmr_data()
     
     saved_files = os.listdir(save_dir)

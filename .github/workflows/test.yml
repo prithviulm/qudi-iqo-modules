@@ -42,6 +42,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev-test]"
         git checkout application_test
+        qudi-install-kernel
         cd ../qudi-iqo-modules
 
     - name: Install dependencies iqo modules

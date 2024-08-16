@@ -69,7 +69,7 @@ def get_odmr_range(length, scanner):
 def get_tolerance(value, bound):
     return int(value + value * TOLERANCE/100) if bound == 'upper' else int(value - value * TOLERANCE/100)
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope='module', autouse=True)
 def start_qudi_process():
     """This fixture starts the Qudi process and ensures it's running before tests."""
     qudi_process = multiprocessing.Process(target=run_qudi)
@@ -80,14 +80,14 @@ def start_qudi_process():
     if qudi_process.is_alive():
         qudi_process.terminate()
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def remote_instance():
     conn = rpyc.connect("localhost", 18861)
     root = conn.root
     qudi_instance = root._qudi
     return qudi_instance
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def module(remote_instance):
     module_manager = remote_instance.module_manager
     odmr_gui = 'odmr_gui'

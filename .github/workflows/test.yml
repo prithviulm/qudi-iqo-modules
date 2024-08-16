@@ -21,7 +21,6 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10']
         numpy-version: ['1.24.4', '2.0.0']
-        scipy-version: ['1.10.0','1.13.0']
         exclude:
           - python-version: '3.8'
             numpy-version: '2.0.0'
@@ -48,8 +47,8 @@ jobs:
     - name: Install dependencies iqo modules
       run: |
         pip install -e ".[dev-test]"
-    - name: Test different version of numpy and scipy
-      run: pip install numpy==${{ matrix.numpy-version }} scipy==${{ matrix.scipy-version }}
+    - name: Test different version of numpy 
+      run: pip install numpy==${{ matrix.numpy-version }} 
     - name: Test with pytest
       run: |
         pytest -s

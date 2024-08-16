@@ -20,17 +20,20 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from qudi.core import modulemanager,application
 import numpy as np
-import pytest
-from PySide2 import QtCore, QtWidgets
-import weakref
-from qudi.util.yaml import yaml_load
 import os
 import coverage
 import time
 import math
+from utils import add_modules
+import pytest
+import rpyc
+import multiprocessing
+from qudi.core import application
+from PySide2 import QtWidgets
+from PySide2.QtCore import QTimer
 
+CONFIG = os.path.join(os.getcwd(),'tests/test.cfg')
 MODULE = 'odmr_logic'
 BASE = 'logic'
 CHANNELS = ('APD counts', 'Photodiode')
@@ -39,24 +42,22 @@ TOLERANCE = 10 # tolerance for signal data range
 
 
 
+def run_qudi():
+    app_cls = QtWidgets.QApplication
+    app = app_cls.instance()
+    if app is None:
+        app = app_cls()
+    qudi_instance = application.Qudi.instance()
+    if qudi_instance is None:
+        qudi_instance = application.Qudi(config_file=CONFIG)
+    QTimer.singleShot(50000, qudi_instance.quit)
+    qudi_instance.run()
 
 
-@pytest.fixture(scope='module')
-def module(qudi_instance, config):
-    module_manager =  qudi_instance.module_manager
-    for base in ['logic', 'hardware']:
-        for module_name, module_cfg in list(config[base].items()):
-            module_manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
-    module = module_manager.modules[MODULE]
-    module.activate()
-    return module.instance
-
-@pytest.fixture(scope='module')
-def scanner(module):
+def get_scanner(module):
     return module._data_scanner()
 
-@pytest.fixture(scope='module')
-def microwave(module):
+def get_microwave(module):
     return module._microwave()
 
 def get_odmr_range(length, scanner):
@@ -67,6 +68,34 @@ def get_odmr_range(length, scanner):
 
 def get_tolerance(value, bound):
     return int(value + value * TOLERANCE/100) if bound == 'upper' else int(value - value * TOLERANCE/100)
+
+@pytest.fixture(scope='session', autouse=True)
+def start_qudi_process():
+    """This fixture starts the Qudi process and ensures it's running before tests."""
+    qudi_process = multiprocessing.Process(target=run_qudi)
+    qudi_process.start()
+    time.sleep(10)  
+    yield
+    qudi_process.join(timeout=100)
+    if qudi_process.is_alive():
+        qudi_process.terminate()
+
+@pytest.fixture(scope='session')
+def remote_instance():
+    conn = rpyc.connect("localhost", 18861)
+    root = conn.root
+    qudi_instance = root._qudi
+    return qudi_instance
+
+@pytest.fixture(scope='session')
+def module(remote_instance):
+    module_manager = remote_instance.module_manager
+    odmr_gui = 'odmr_gui'
+    odmr_logic = 'odmr_logic'
+    module_manager.activate_module(odmr_gui)
+    logic_instance = module_manager._modules[odmr_logic].instance
+    return logic_instance
+
 
 
 #@pytest.fixture(autouse=True)
@@ -86,7 +115,7 @@ def coverage_for_each_test(request):
     print(f"Coverage report saved to {test_dir}")
 
 
-def test_start_odmr_scan(module, scanner, qtbot):
+def test_start_odmr_scan(module, qtbot):
     """This tests if the scan parameters such as frequency and signal data are correctly generated,
       and if the signal data is generated for the given runtime with appropriate values
 
@@ -99,6 +128,8 @@ def test_start_odmr_scan(module, scanner, qtbot):
     qtbot : fixture
         Fixture for qt support
     """    
+
+    scanner = get_scanner(module)
     freq_low, freq_high, freq_counts = list(map(int, module.frequency_ranges[0]))
     frequency_data = module.frequency_data
     assert len(frequency_data) == module.frequency_range_count
@@ -110,8 +141,8 @@ def test_start_odmr_scan(module, scanner, qtbot):
     
     module.start_odmr_scan()
     run_time = int(module._run_time) 
-    with qtbot.waitSignals( [module._sigNextLine]*run_time, timeout = run_time*1500) as blockers:
-        pass
+    #with qtbot.waitSignals( [module._sigNextLine]*run_time, timeout = run_time*1500) as blockers:
+    #    pass
     time.sleep(run_time)
     signal_data = module.signal_data
     assert len(signal_data) == len(scanner.active_channels)
@@ -178,3 +209,9 @@ def test_save_odmr_data(module):
         actual_channel_data = module.signal_data[channel][0]
         for saved_value, actual_value in zip(saved_channel_data, actual_channel_data):
             assert np.isclose(saved_value, actual_value)
+
+
+
+
+
+

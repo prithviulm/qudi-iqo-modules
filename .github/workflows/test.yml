@@ -19,7 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ['3.8', '3.9', '3.10']
+        numpy-version: ['1.24.4', '2.0.0']
+        scipy-version: ['1.10.0','1.13.0']
+        exclude:
+          - python-version: '3.8'
+            numpy-version: '2.0.0'
 
     steps:
     - uses: actions/checkout@v4
@@ -37,11 +42,14 @@ jobs:
         cd qudi-core
         python -m pip install --upgrade pip
         pip install -e ".[dev-test]"
+        git checkout application_test
         cd ../qudi-iqo-modules
 
     - name: Install dependencies iqo modules
       run: |
         pip install -e ".[dev-test]"
+    - name: Test different version of numpy and scipy
+      run: pip install numpy==${{ matrix.numpy-version }} scipy==${{ matrix.scipy-version }}
     - name: Test with pytest
       run: |
         pytest -s

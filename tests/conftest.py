@@ -35,5 +35,3 @@ def config():
     configuration = (yaml_load(CONFIG))
     return configuration
 
-
-

@@ -83,7 +83,7 @@ def start_qudi_process():
 @pytest.fixture(scope='module')
 def remote_instance():
     time.sleep(5)
-    conn = rpyc.connect("localhost", 18861)
+    conn = rpyc.connect("localhost", 18861, config={'sync_request_timeout': 60})
     root = conn.root
 
     qudi_instance = root._qudi

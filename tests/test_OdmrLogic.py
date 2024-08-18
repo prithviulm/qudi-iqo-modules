@@ -51,6 +51,7 @@ def run_qudi():
     if qudi_instance is None:
         qudi_instance = application.Qudi(config_file=CONFIG)
     QTimer.singleShot(30000, qudi_instance.quit)
+    qudi_instance.no_gui = True
     qudi_instance.run()
 
 

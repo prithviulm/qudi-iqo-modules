@@ -19,7 +19,7 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
-
+from qudi.util.network import netobtain
 import numpy as np
 import os
 import coverage
@@ -50,8 +50,7 @@ def run_qudi():
     qudi_instance = application.Qudi.instance()
     if qudi_instance is None:
         qudi_instance = application.Qudi(config_file=CONFIG)
-    QTimer.singleShot(30000, qudi_instance.quit)
-    qudi_instance.no_gui = True
+    QTimer.singleShot(50000, qudi_instance.quit)
     qudi_instance.run()
 
 
@@ -75,16 +74,15 @@ def start_qudi_process():
     """This fixture starts the Qudi process and ensures it's running before tests."""
     qudi_process = multiprocessing.Process(target=run_qudi)
     qudi_process.start()
-    #time.sleep(10)  
     yield
-    qudi_process.join(timeout=100)
+    qudi_process.join(timeout=10)
     if qudi_process.is_alive():
         qudi_process.terminate()
 
 @pytest.fixture(scope='module')
 def remote_instance():
     time.sleep(10)
-    conn = rpyc.connect("localhost", 18861, config={'sync_request_timeout': 60})
+    conn = rpyc.connect("localhost", 18861)
     root = conn.root
 
     qudi_instance = root._qudi
@@ -133,6 +131,7 @@ def test_start_odmr_scan(module, qtbot):
     """    
 
     scanner = get_scanner(module)
+    module.runtime = 5
     freq_low, freq_high, freq_counts = list(map(int, module.frequency_ranges[0]))
     frequency_data = module.frequency_data
     assert len(frequency_data) == module.frequency_range_count
@@ -209,9 +208,8 @@ def test_save_odmr_data(module):
     saved_signal_data = np.loadtxt(signal_data_file)
     for i,channel in enumerate(CHANNELS):
         saved_channel_data = [saved_signal_row[i+1]  for saved_signal_row in saved_signal_data]
-        actual_channel_data = module.signal_data[channel][0]
-        for saved_value, actual_value in zip(saved_channel_data, actual_channel_data):
-            assert np.isclose(saved_value, actual_value)
+        actual_channel_data = netobtain(module.signal_data[channel][0])
+        assert np.allclose(saved_channel_data, actual_channel_data)
 
 
 

@@ -74,6 +74,7 @@ def start_qudi_process():
     """This fixture starts the Qudi process and ensures it's running before tests."""
     qudi_process = multiprocessing.Process(target=run_qudi)
     qudi_process.start()
+    time.sleep(10)
     yield
     qudi_process.join(timeout=10)
     if qudi_process.is_alive():
@@ -82,7 +83,7 @@ def start_qudi_process():
 @pytest.fixture(scope='module')
 def remote_instance():
     time.sleep(10)
-    conn = rpyc.connect("localhost", 18861)
+    conn = rpyc.connect("localhost", 18861, config={'sync_request_timeout': 60})
     root = conn.root
 
     qudi_instance = root._qudi

@@ -88,8 +88,19 @@ dev-docs = [
 ]
 
 dev-lint-format = ["ruff==0.2.1"]
-
 dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
+
+[tool.ruff]
+select = ["D102", "D103", "D105"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+
 
 # "sphinx-book-theme==1.1.1"
 # nbsphinx = "^0.8.8"

@@ -98,7 +98,7 @@ quote-style = "single"
 docstring-quotes = "double"
 
 [project.scripts]
-dev-lint-format = ["ruff==0.2.1"]
+dev-lint-format = "ruff==0.2.1"
 dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 

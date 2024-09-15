@@ -86,20 +86,6 @@ dev-docs = [
     "pydata_sphinx_theme==0.15.4"
 ]
 
-dev-test = [
-    "pytest==8.0.1",
-    "pytest-qt",
-    "coverage"
-]
-
-[project.scripts]
-qudi = 'qudi.runnable:main'
-qudi-config-editor = 'qudi.tools.config_editor.config_editor:main'
-qudi-uninstall-kernel = 'qudi.core.qudikernel:uninstall_kernel'
-qudi-install-kernel = 'qudi.core.qudikernel:install_kernel'
-
-dev-lint-format = ["ruff==0.2.1"]
-dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 [tool.ruff]
 select = ["D102", "D103", "D105"]
@@ -111,6 +97,9 @@ quote-style = "single"
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
+[project.scripts]
+dev-lint-format = ["ruff==0.2.1"]
+dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 
 # "pydata_sphinx_theme==0.15.4"

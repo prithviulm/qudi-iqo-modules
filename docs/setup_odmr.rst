@@ -1,27 +1,34 @@
-Introduction
-============
+.. _odmr:
 
-A typical working toolchain consists out of the following qudi modules:
+Odmr
+====
 
-logic: - odmr_logic
+A typical working toolchain consists of the following Qudi modules:
 
-hardware: - microwave, e.g. mw_source_smiq - data_scanner,
-e.g. ni_finite_sampling_inut
+- **logic**: 
+  - `odmr_logic`
+  
+- **hardware**:
+  - `microwave`, e.g., `mw_source_smiq`
+  - `data_scanner`, e.g., `ni_finite_sampling_input`
 
-gui: - odmrgui
+- **gui**:
+  - `odmrgui`
 
-Example config
+Example Config
 ==============
 
-These modules need to be configured and connected in your qudi config
-file. We here provide an examplary config for a toolchain based on a NI
-X-series scanner with analogue output and digital (APD TTL) input. Note:
-This readme file might not be up-to-date with the most recent
-development. We advice to check the examplary config present in the
-docstring of every module’s python file. In the list above, a direct
-link for every module is provided:
+These modules need to be configured and connected in your Qudi config
+file. Below is an example config for a toolchain based on a NI
+X-series scanner with analogue output and digital (APD TTL) input.
 
-::
+.. note::
+   This readme might not be up-to-date with the most recent development. 
+   We recommend checking the example config present in the docstring of 
+   every module’s Python file. In the list above, a direct link for 
+   every module is provided:
+
+.. code-block:: yaml
 
    gui:
        odmr_gui:
@@ -48,7 +55,7 @@ link for every module is provided:
                frequency_max: null  # optional, in Hz
                power_min: null  # optional, in dBm
                power_max: null  # optional, in dBm
-               
+
        ni_finite_sampling_input:
            module.Class: 'ni_x_series.ni_x_series_finite_sampling_input.NIXSeriesFiniteSamplingInput'
            options:
@@ -66,12 +73,13 @@ link for every module is provided:
                sample_clock_output: '/Dev1/PFI20'  # optional
        
 
-Configuration hints:
-====================
+Configuration Hints
+===================
 
-Make sure that the hardware in the conig file is named as it is called
-by the logic. (Copy paste out of the hardware file can name it
-differently).
+Make sure that the hardware in the config file is named as it is referred to
+by the logic (copy-pasting from the hardware file can result in 
+differently named entries).
 
-Todo this readme:
-=================
+Todo This Readme
+================
+

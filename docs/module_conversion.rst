@@ -94,8 +94,8 @@ Fitting and saving is now part of the core itself and does not belong to
 a logic module. Therefore both can be accessed via core-imports instead
 of with connectors.
 
-For details please see `Saving <data_storage.md>`__ and
-`Fitting <data_fitting_integration.md>`__.
+For details please see :ref:`Saving <core:data_storage>` and
+:ref:`Fitting <core:data_fitting>`.
 
 Threading
 ---------

@@ -63,7 +63,7 @@ html_theme_options = {
     "navbar_persistent": ["theme-switcher", "search-button"],
     "footer_start": ["copyright", "sphinx-version"],
     "footer_end": ["theme-version"],
-    "show_toc_level": 1,
+    "show_toc_level": 2,
     "show_nav_level": 4,
     "collapse_navigation": True,
     "sidebar_hide_name": False,
@@ -87,6 +87,12 @@ autodoc_default_options = {
     'inherited-members': False   # Show inheritance links
     # Other options as needed
 }
+
+intersphinx_mapping = {
+    'core': ('https://qudi-core-testing.readthedocs.io/en/george/', None),
+}
+
+
 # This gives the full name of the inherited classes in the documentation. It would be better if we could
 # just reference the documentation externally with intersphinx but it's not working correctly. Sphinx
 # ends up documenting the entire inherited base class instead of just linking to it. It could be a problem

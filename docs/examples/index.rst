@@ -7,8 +7,8 @@ Examples
     :caption: Examples
     :hidden:
 
-    setup_confocal_scanning.rst
-    setup_odmr.rst
-    setup_timeseries.rst
+    ../setup_confocal_scanning.rst
+    ../setup_odmr.rst
+    ../setup_timeseries.rst
 
 .. include:: ../setup_confocal_scanning.rst

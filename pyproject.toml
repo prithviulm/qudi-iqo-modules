@@ -63,7 +63,6 @@ dependencies = [
     'PyVisa>=1.12.0',
     'scipy>=1.9.1',
     'zaber_motion>=2.14.6',
-    'ruff==0.2.1'
 ]
 
 
@@ -86,6 +85,8 @@ dev-docs = [
     "numpydoc==1.6.0",
     "pydata_sphinx_theme==0.15.4"
 ]
+dev-lint-format = ["ruff==0.2.1"]
+dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
 
 
 [tool.ruff]
@@ -98,9 +99,7 @@ quote-style = "single"
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
-[project.scripts]
-dev-lint-format = "ruff"
-dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]
+
 
 
 # "pydata_sphinx_theme==0.15.4"

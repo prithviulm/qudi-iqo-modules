@@ -2,39 +2,14 @@ Welcome to Qudi IQO Modules's documentation!
 ============================================
 
 .. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Getting Started
+    :maxdepth: 2
+    :caption: Documentation Sections
+    
 
-    installation_guide
-    migrating_from_qudi_v0.1
-    module_conversion
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Examples
-
-    setup_confocal_scanning
-    setup_odmr
-    setup_timeseries
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Development
-
-    repo_management/*
-    changelog
-
-
-.. autosummary::
-    :caption: API Reference
-    :toctree: _autosummary
-    :template: custom-module-template.rst
-    :recursive:
-
-    qudi
+    getting_started/index
+    examples/index
+    development/index
+    api_reference/index
 
 Indices and tables
 ==================

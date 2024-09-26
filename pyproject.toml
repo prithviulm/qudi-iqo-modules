@@ -83,7 +83,8 @@ where = ["src"]
 dev-docs = [
     "Sphinx==7.2.6",
     "numpydoc==1.6.0",
-    "pydata_sphinx_theme==0.15.4"
+    "pydata_sphinx_theme==0.15.4",
+    "sphinx-design==0.6.1"
 ]
 dev-lint-format = ["ruff==0.2.1"]
 dev-test = ["pytest==8.0.1", "pytest-qt", "coverage"]

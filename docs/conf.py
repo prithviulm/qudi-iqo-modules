@@ -28,6 +28,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest', 
+    "sphinx_design",
     'sphinx.ext.coverage'
 ]
 intersphinx_mapping = {
@@ -50,7 +51,7 @@ autodoc_mock_imports = ["lmfit"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'pydata_sphinx_theme'
-html_logo = "../src/qudi/artwork/logo/logo_qudi.ico"
+html_logo = "../src/qudi/artwork/logo_qudi.ico"
 html_theme_options = {
     "logo": {
         "text": "Qudi-IQO-MODULES",
@@ -73,6 +74,9 @@ html_sidebars = {
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
 }
 html_static_path = ['_static']  # Normally defaults to '_static' but we don't have any static files.
+html_css_files = [
+    'custom.css',
+]
 default_dark_mode = False  # For sphinx_rtd_dark_mode. Dark mode needs tweaking so not defaulting to it yet.
 
 numpydoc_show_class_members = False

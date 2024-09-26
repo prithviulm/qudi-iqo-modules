@@ -41,9 +41,15 @@ class PoiMarker(pg.EllipseROI):
     """
     Creates a circle as a marker.
 
-    @param float[2] pos: The (x, y) position of the POI.
-    @param **args: All extra keyword arguments are passed to ROI()
+    Parameters
+    ----------
+    pos : float[2]
+        The (x, y) position of the POI.
+    **args : 
+        All extra keyword arguments are passed to ROI().
 
+    Notes
+    -----
     Have a look at:
     http://www.pyqtgraph.org/documentation/graphicsItems/roi.html
     """
@@ -54,13 +60,19 @@ class PoiMarker(pg.EllipseROI):
 
     def __init__(self, position, radius, poi_name=None, view_widget=None, **kwargs):
         """
-
-        @param position:
-        @param radius:
-        @param poi_name:
-        @param view_widget:
-        @param kwargs:
-        """
+    Parameters
+    ----------
+    position :
+        The position of the element.
+    radius :
+        The radius of the element.
+    poi_name :
+        The name of the point of interest (POI).
+    view_widget :
+        The view widget associated with the element.
+    kwargs :
+        Additional keyword arguments.
+    """
         self._poi_name = '' if poi_name is None else poi_name
         self._view_widget = view_widget
         self._selected = False
@@ -116,11 +128,14 @@ class PoiMarker(pg.EllipseROI):
 
     def set_position(self, position):
         """
-        Sets the POI position and center the marker circle on that position.
-        Also position the label accordingly.
+    Sets the POI position and centers the marker circle on that position.
+    Also positions the label accordingly.
 
-        @param float[2] position: The (x,y) center position of the POI marker
-        """
+    Parameters
+    ----------
+    position : float[2]
+        The (x, y) center position of the POI marker.
+    """
         self._position = np.array(position, dtype=float)
         radius = self.radius
         label_offset = radius / np.sqrt(2)
@@ -130,20 +145,26 @@ class PoiMarker(pg.EllipseROI):
 
     def set_name(self, name):
         """
-        Set the poi_name of the marker and update tha label accordingly.
+    Set the poi_name of the marker and update the label accordingly.
 
-        @param str name:
-        """
+    Parameters
+    ----------
+    name : str
+        The name of the POI marker.
+    """
         self._poi_name = name
         self.label.setText(self._poi_name)
         return
 
     def set_radius(self, radius):
         """
-        Set the size of the marker and reposition itself and the label to center it again.
+    Set the size of the marker and reposition itself and the label to center it again.
 
-        @param float radius: The radius of the circle
-        """
+    Parameters
+    ----------
+    radius : float
+        The radius of the circle.
+    """
         label_offset = radius / np.sqrt(2)
         self.setSize((2 * radius, 2 * radius))
         self.setPos(self.position[0] - radius, self.position[1] - radius)
@@ -185,19 +206,32 @@ class NameValidator(QtGui.QValidator):
 
     def validate(self, string, position):
         """
-        This is the actual validator. It checks whether the current user input is a valid string
-        every time the user types a character. There are 3 states that are possible.
-        1) Invalid: The current input string is invalid. The user input will not accept the last
-                    typed character.
-        2) Acceptable: The user input in conform with the regular expression and will be accepted.
-        3) Intermediate: The user input is not a valid string yet but on the right track. Use this
-                         return value to allow the user to type fill-characters needed in order to
-                         complete an expression.
-        @param string: The current input string (from a QLineEdit for example)
-        @param position: The current position of the text cursor
-        @return: enum QValidator::State: the returned validator state,
-                 str: the input string, int: the cursor position
-        """
+    This is the actual validator. It checks whether the current user input is a valid string
+    every time the user types a character. There are 3 states that are possible:
+    
+    1) Invalid: The current input string is invalid. The user input will not accept the last
+                typed character.
+    2) Acceptable: The user input conforms with the regular expression and will be accepted.
+    3) Intermediate: The user input is not a valid string yet but on the right track. Use this
+                     return value to allow the user to type fill-characters needed in order to
+                     complete an expression.
+
+    Parameters
+    ----------
+    string : str
+        The current input string (from a QLineEdit for example).
+    position : int
+        The current position of the text cursor.
+
+    Returns
+    -------
+    QValidator.State
+        The returned validator state (enum).
+    str
+        The input string.
+    int
+        The cursor position.
+    """
         # Return intermediate status when empty string is passed
         if not string:
             if self._empty_allowed:

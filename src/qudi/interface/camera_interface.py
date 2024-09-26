@@ -18,6 +18,7 @@ This file contains the Qudi Interface for a camera.
 .. 
 .. You should have received a copy of the GNU Lesser General Public License along with qudi.
 .. If not, see <https://www.gnu.org/licenses/>.
+
 """
 
 from abc import abstractmethod

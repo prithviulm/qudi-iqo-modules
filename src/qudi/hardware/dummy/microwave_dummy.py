@@ -171,12 +171,17 @@ class MicrowaveDummy(MicrowaveInterface):
             self.module_state.unlock()
 
     def set_cw(self, frequency, power):
-        """Configure the CW microwave output. Does not start physical signal output, see also
-        "cw_on".
-
-        @param float frequency: frequency to set in Hz
-        @param float power: power to set in dBm
         """
+Configure the CW microwave output. Does not start physical signal output, see also "cw_on".
+
+Parameters
+----------
+frequency : float
+    Frequency to set in Hz.
+power : float
+    Power to set in dBm.
+"""
+
         with self._thread_lock:
             # Check if CW parameters can be set.
             if self.module_state() != 'idle':

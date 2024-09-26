@@ -56,9 +56,6 @@ class SwitchRadioButtonWidget(QtWidgets.QWidget):
 
     def __button_toggled_cb(self, button, checked):
         """
-
-        @param button:
-        @param checked:
         """
         if checked:
             for state, radio in self.radio_buttons.items():

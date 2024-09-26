@@ -45,7 +45,7 @@ class PoiMarker(pg.EllipseROI):
     ----------
     pos : float[2]
         The (x, y) position of the POI.
-    **args : 
+    **args :
         All extra keyword arguments are passed to ROI().
 
     Notes
@@ -53,27 +53,28 @@ class PoiMarker(pg.EllipseROI):
     Have a look at:
     http://www.pyqtgraph.org/documentation/graphicsItems/roi.html
     """
-    default_pen = {'color': '#F0F', 'width': 2}
-    select_pen = {'color': '#FFF', 'width': 2}
+
+    default_pen = {"color": "#F0F", "width": 2}
+    select_pen = {"color": "#FFF", "width": 2}
 
     sigPoiSelected = QtCore.Signal(str)
 
     def __init__(self, position, radius, poi_name=None, view_widget=None, **kwargs):
         """
-    Parameters
-    ----------
-    position :
-        The position of the element.
-    radius :
-        The radius of the element.
-    poi_name :
-        The name of the point of interest (POI).
-    view_widget :
-        The view widget associated with the element.
-    kwargs :
-        Additional keyword arguments.
-    """
-        self._poi_name = '' if poi_name is None else poi_name
+        Parameters
+        ----------
+        position :
+            The position of the element.
+        radius :
+            The radius of the element.
+        poi_name :
+            The name of the point of interest (POI).
+        view_widget :
+            The view widget associated with the element.
+        kwargs :
+            Additional keyword arguments.
+        """
+        self._poi_name = "" if poi_name is None else poi_name
         self._view_widget = view_widget
         self._selected = False
         self._position = np.array(position, dtype=float)
@@ -81,9 +82,9 @@ class PoiMarker(pg.EllipseROI):
         size = (2 * radius, 2 * radius)
         super().__init__(pos=self._position, size=size, pen=self.default_pen, **kwargs)
         # self.aspectLocked = True
-        self.label = pg.TextItem(text=self._poi_name,
-                                 anchor=(0, 1),
-                                 color=self.default_pen['color'])
+        self.label = pg.TextItem(
+            text=self._poi_name, anchor=(0, 1), color=self.default_pen["color"]
+        )
         self.setAcceptedMouseButtons(QtCore.Qt.LeftButton)
         self.sigClicked.connect(self._notify_clicked_poi_name)
         self.set_position(self._position)
@@ -128,47 +129,51 @@ class PoiMarker(pg.EllipseROI):
 
     def set_position(self, position):
         """
-    Sets the POI position and centers the marker circle on that position.
-    Also positions the label accordingly.
+        Sets the POI position and centers the marker circle on that position.
+        Also positions the label accordingly.
 
-    Parameters
-    ----------
-    position : float[2]
-        The (x, y) center position of the POI marker.
-    """
+        Parameters
+        ----------
+        position : float[2]
+            The (x, y) center position of the POI marker.
+        """
         self._position = np.array(position, dtype=float)
         radius = self.radius
         label_offset = radius / np.sqrt(2)
         self.setPos(self._position[0] - radius, self._position[1] - radius)
-        self.label.setPos(self._position[0] + label_offset, self._position[1] + label_offset)
+        self.label.setPos(
+            self._position[0] + label_offset, self._position[1] + label_offset
+        )
         return
 
     def set_name(self, name):
         """
-    Set the poi_name of the marker and update the label accordingly.
+        Set the poi_name of the marker and update the label accordingly.
 
-    Parameters
-    ----------
-    name : str
-        The name of the POI marker.
-    """
+        Parameters
+        ----------
+        name : str
+            The name of the POI marker.
+        """
         self._poi_name = name
         self.label.setText(self._poi_name)
         return
 
     def set_radius(self, radius):
         """
-    Set the size of the marker and reposition itself and the label to center it again.
+        Set the size of the marker and reposition itself and the label to center it again.
 
-    Parameters
-    ----------
-    radius : float
-        The radius of the circle.
-    """
+        Parameters
+        ----------
+        radius : float
+            The radius of the circle.
+        """
         label_offset = radius / np.sqrt(2)
         self.setSize((2 * radius, 2 * radius))
         self.setPos(self.position[0] - radius, self.position[1] - radius)
-        self.label.setPos(self.position[0] + label_offset, self.position[1] + label_offset)
+        self.label.setPos(
+            self.position[0] + label_offset, self.position[1] + label_offset
+        )
         return
 
     def select(self):
@@ -178,7 +183,7 @@ class PoiMarker(pg.EllipseROI):
         """
         self._selected = True
         self.setPen(self.select_pen)
-        self.label.setColor(self.select_pen['color'])
+        self.label.setColor(self.select_pen["color"])
         return
 
     def deselect(self):
@@ -188,7 +193,7 @@ class PoiMarker(pg.EllipseROI):
         """
         self._selected = False
         self.setPen(self.default_pen)
-        self.label.setColor(self.default_pen['color'])
+        self.label.setColor(self.default_pen["color"])
         return
 
 
@@ -198,7 +203,7 @@ class NameValidator(QtGui.QValidator):
     So no special characters (except '_') and blanks are allowed.
     """
 
-    name_re = re.compile(r'([\w]+)')
+    name_re = re.compile(r"([\w]+)")
 
     def __init__(self, *args, empty_allowed=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -206,42 +211,42 @@ class NameValidator(QtGui.QValidator):
 
     def validate(self, string, position):
         """
-    This is the actual validator. It checks whether the current user input is a valid string
-    every time the user types a character. There are 3 states that are possible:
-    
-    1) Invalid: The current input string is invalid. The user input will not accept the last
-                typed character.
-    2) Acceptable: The user input conforms with the regular expression and will be accepted.
-    3) Intermediate: The user input is not a valid string yet but on the right track. Use this
-                     return value to allow the user to type fill-characters needed in order to
-                     complete an expression.
+        This is the actual validator. It checks whether the current user input is a valid string
+        every time the user types a character. There are 3 states that are possible:
 
-    Parameters
-    ----------
-    string : str
-        The current input string (from a QLineEdit for example).
-    position : int
-        The current position of the text cursor.
+        1) Invalid: The current input string is invalid. The user input will not accept the last
+                    typed character.
+        2) Acceptable: The user input conforms with the regular expression and will be accepted.
+        3) Intermediate: The user input is not a valid string yet but on the right track. Use this
+                         return value to allow the user to type fill-characters needed in order to
+                         complete an expression.
 
-    Returns
-    -------
-    QValidator.State
-        The returned validator state (enum).
-    str
-        The input string.
-    int
-        The cursor position.
-    """
+        Parameters
+        ----------
+        string : str
+            The current input string (from a QLineEdit for example).
+        position : int
+            The current position of the text cursor.
+
+        Returns
+        -------
+        QValidator.State
+            The returned validator state (enum).
+        str
+            The input string.
+        int
+            The cursor position.
+        """
         # Return intermediate status when empty string is passed
         if not string:
             if self._empty_allowed:
-                return self.Acceptable, '', position
+                return self.Acceptable, "", position
             else:
                 return self.Intermediate, string, position
 
         match = self.name_re.match(string)
         if not match:
-            return self.Invalid, '', position
+            return self.Invalid, "", position
 
         matched = match.group()
         if matched == string:
@@ -253,7 +258,7 @@ class NameValidator(QtGui.QValidator):
         match = self.name_re.search(text)
         if match:
             return match.group()
-        return ''
+        return ""
 
 
 class PoiManagerMainWindow(QtWidgets.QMainWindow):
@@ -261,7 +266,7 @@ class PoiManagerMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         # Get the path to the *.ui file
         this_dir = os.path.dirname(__file__)
-        ui_file = os.path.join(this_dir, 'ui_poimanagergui.ui')
+        ui_file = os.path.join(this_dir, "ui_poimanagergui.ui")
 
         # Load it
         super(PoiManagerMainWindow, self).__init__()
@@ -270,8 +275,8 @@ class PoiManagerMainWindow(QtWidgets.QMainWindow):
         # Create central widget
         self.roi_image = MouseTrackingImageWidget()
         self.roi_image.image_item.setOpts(False)
-        self.roi_image.set_axis_label('bottom', label='Position', unit='m')
-        self.roi_image.set_axis_label('left', label='Position', unit='m')
+        self.roi_image.set_axis_label("bottom", label="Position", unit="m")
+        self.roi_image.set_axis_label("left", label="Position", unit="m")
         self.setCentralWidget(self.roi_image)
         self.show()
 
@@ -291,12 +296,14 @@ class PoiManagerGui(GuiBase):
     """
 
     # declare connectors
-    _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
+    _poi_manager_logic = Connector(
+        name="poi_manager_logic", interface="PoiManagerLogic"
+    )
 
     # config options
-    _data_scan_axes = ConfigOption(name='data_scan_axes',
-                                   default=('x', 'y'),
-                                   constructor=lambda x: tuple(x))
+    _data_scan_axes = ConfigOption(
+        name="data_scan_axes", default=("x", "y"), constructor=lambda x: tuple(x)
+    )
 
     # declare signals
     sigTrackPeriodChanged = QtCore.Signal(float)
@@ -310,14 +317,16 @@ class PoiManagerGui(GuiBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._mw = None             # QMainWindow handle
-        self.x_shift_plot = None    # pyqtgraph PlotDataItem for ROI history plot
-        self.y_shift_plot = None    # pyqtgraph PlotDataItem for ROI history plot
-        self.z_shift_plot = None    # pyqtgraph PlotDataItem for ROI history plot
+        self._mw = None  # QMainWindow handle
+        self.x_shift_plot = None  # pyqtgraph PlotDataItem for ROI history plot
+        self.y_shift_plot = None  # pyqtgraph PlotDataItem for ROI history plot
+        self.z_shift_plot = None  # pyqtgraph PlotDataItem for ROI history plot
 
-        self._markers = dict()      # dict to hold handles for the POI markers
+        self._markers = dict()  # dict to hold handles for the POI markers
 
-        self.__poi_selector_active = False  # Flag indicating if the poi selector is active
+        self.__poi_selector_active = (
+            False  # Flag indicating if the poi selector is active
+        )
 
     def on_activate(self):
         """
@@ -341,9 +350,11 @@ class PoiManagerGui(GuiBase):
         self.__init_roi_history_plot()
 
         # Initialize refocus timer
-        self.update_refocus_timer(self._poi_manager_logic().module_state() == 'locked',
-                                  self._poi_manager_logic().refocus_period,
-                                  self._poi_manager_logic().refocus_period)
+        self.update_refocus_timer(
+            self._poi_manager_logic().module_state() == "locked",
+            self._poi_manager_logic().refocus_period,
+            self._poi_manager_logic().refocus_period,
+        )
         # Initialize POIs
         self._update_pois(self._poi_manager_logic().poi_positions)
         # Initialize ROI name
@@ -391,12 +402,23 @@ class PoiManagerGui(GuiBase):
         self._mw.sample_shift_dockWidget.show()
 
         self._mw.addDockWidget(QtCore.Qt.TopDockWidgetArea, self._mw.roi_map_dockWidget)
-        self._mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self._mw.poi_editor_dockWidget)
-        self._mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self._mw.poi_tracker_dockWidget)
-        self._mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self._mw.auto_pois_dockWidget)
+        self._mw.addDockWidget(
+            QtCore.Qt.BottomDockWidgetArea, self._mw.poi_editor_dockWidget
+        )
+        self._mw.addDockWidget(
+            QtCore.Qt.BottomDockWidgetArea, self._mw.poi_tracker_dockWidget
+        )
+        self._mw.addDockWidget(
+            QtCore.Qt.BottomDockWidgetArea, self._mw.auto_pois_dockWidget
+        )
         self._mw.splitDockWidget(
-            self._mw.poi_tracker_dockWidget, self._mw.auto_pois_dockWidget, QtCore.Qt.Vertical)
-        self._mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self._mw.sample_shift_dockWidget)
+            self._mw.poi_tracker_dockWidget,
+            self._mw.auto_pois_dockWidget,
+            QtCore.Qt.Vertical,
+        )
+        self._mw.addDockWidget(
+            QtCore.Qt.BottomDockWidgetArea, self._mw.sample_shift_dockWidget
+        )
 
         if not self._mw.roi_map_view_Action.isChecked():
             self._mw.roi_map_view_Action.trigger()
@@ -412,36 +434,44 @@ class PoiManagerGui(GuiBase):
 
     def __init_roi_scan_image(self):
         # Get scan image from logic and update initialize plot
-        self._update_scan_image(self._poi_manager_logic().roi_scan_image,
-                                self._poi_manager_logic().roi_scan_image_extent)
+        self._update_scan_image(
+            self._poi_manager_logic().roi_scan_image,
+            self._poi_manager_logic().roi_scan_image_extent,
+        )
         return
 
     def __init_roi_history_plot(self):
         # Setting up display of sample shift plot
-        self.x_shift_plot = pg.PlotDataItem(x=[0],
-                                            y=[0],
-                                            pen=pg.mkPen(palette.c1, style=QtCore.Qt.DotLine),
-                                            symbol='o',
-                                            symbolPen=palette.c1,
-                                            symbolBrush=palette.c1,
-                                            symbolSize=5,
-                                            name='x')
-        self.y_shift_plot = pg.PlotDataItem(x=[0],
-                                            y=[0],
-                                            pen=pg.mkPen(palette.c2, style=QtCore.Qt.DotLine),
-                                            symbol='s',
-                                            symbolPen=palette.c2,
-                                            symbolBrush=palette.c2,
-                                            symbolSize=5,
-                                            name='y')
-        self.z_shift_plot = pg.PlotDataItem(x=[0],
-                                            y=[0],
-                                            pen=pg.mkPen(palette.c3, style=QtCore.Qt.DotLine),
-                                            symbol='t',
-                                            symbolPen=palette.c3,
-                                            symbolBrush=palette.c3,
-                                            symbolSize=5,
-                                            name='z')
+        self.x_shift_plot = pg.PlotDataItem(
+            x=[0],
+            y=[0],
+            pen=pg.mkPen(palette.c1, style=QtCore.Qt.DotLine),
+            symbol="o",
+            symbolPen=palette.c1,
+            symbolBrush=palette.c1,
+            symbolSize=5,
+            name="x",
+        )
+        self.y_shift_plot = pg.PlotDataItem(
+            x=[0],
+            y=[0],
+            pen=pg.mkPen(palette.c2, style=QtCore.Qt.DotLine),
+            symbol="s",
+            symbolPen=palette.c2,
+            symbolBrush=palette.c2,
+            symbolSize=5,
+            name="y",
+        )
+        self.z_shift_plot = pg.PlotDataItem(
+            x=[0],
+            y=[0],
+            pen=pg.mkPen(palette.c3, style=QtCore.Qt.DotLine),
+            symbol="t",
+            symbolPen=palette.c3,
+            symbolBrush=palette.c3,
+            symbolSize=5,
+            name="z",
+        )
 
         self._mw.sample_shift_ViewWidget.addLegend()
 
@@ -451,26 +481,34 @@ class PoiManagerGui(GuiBase):
         self._mw.sample_shift_ViewWidget.addItem(self.z_shift_plot)
 
         # Label axes
-        self._mw.sample_shift_ViewWidget.setLabel('bottom', 'Time', units='s')
-        self._mw.sample_shift_ViewWidget.setLabel('left', 'Sample shift', units='m')
+        self._mw.sample_shift_ViewWidget.setLabel("bottom", "Time", units="s")
+        self._mw.sample_shift_ViewWidget.setLabel("left", "Sample shift", units="m")
 
         self._update_roi_history(self._poi_manager_logic().roi_pos_history)
         return
 
     def __connect_update_signals_from_logic(self):
         self._poi_manager_logic().sigOptimizeTimerUpdated.connect(
-            self.update_refocus_timer, QtCore.Qt.QueuedConnection)
+            self.update_refocus_timer, QtCore.Qt.QueuedConnection
+        )
         self._poi_manager_logic().sigPoiUpdated.connect(
-            self.update_poi, QtCore.Qt.QueuedConnection)
+            self.update_poi, QtCore.Qt.QueuedConnection
+        )
         self._poi_manager_logic().sigActivePoiUpdated.connect(
-            self.update_active_poi, QtCore.Qt.QueuedConnection)
-        self._poi_manager_logic().sigRoiUpdated.connect(self.update_roi, QtCore.Qt.QueuedConnection)
+            self.update_active_poi, QtCore.Qt.QueuedConnection
+        )
+        self._poi_manager_logic().sigRoiUpdated.connect(
+            self.update_roi, QtCore.Qt.QueuedConnection
+        )
         self._poi_manager_logic().sigOptimizeStateUpdated.connect(
-            self.update_refocus_state, QtCore.Qt.QueuedConnection)
+            self.update_refocus_state, QtCore.Qt.QueuedConnection
+        )
         self._poi_manager_logic().sigThresholdUpdated.connect(
-            self._update_poi_threshold, QtCore.Qt.QueuedConnection)
+            self._update_poi_threshold, QtCore.Qt.QueuedConnection
+        )
         self._poi_manager_logic().sigDiameterUpdated.connect(
-            self._update_poi_diameter, QtCore.Qt.QueuedConnection)
+            self._update_poi_diameter, QtCore.Qt.QueuedConnection
+        )
         return
 
     def __disconnect_update_signals_from_logic(self):
@@ -483,48 +521,76 @@ class PoiManagerGui(GuiBase):
 
     def __connect_control_signals_to_logic(self):
         self._mw.new_poi_Action.triggered.connect(
-            self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection
+        )
         self._mw.auto_pois_PushButton.clicked.connect(
-            self._poi_manager_logic().auto_catch_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().auto_catch_poi, QtCore.Qt.QueuedConnection
+        )
         self._mw.del_all_pois_PushButton.clicked.connect(
-            self.delete_all_pois_clicked, QtCore.Qt.QueuedConnection)
+            self.delete_all_pois_clicked, QtCore.Qt.QueuedConnection
+        )
         self._mw.goto_poi_Action.triggered.connect(
-            lambda: self._poi_manager_logic().go_to_poi(), QtCore.Qt.QueuedConnection)
+            lambda: self._poi_manager_logic().go_to_poi(), QtCore.Qt.QueuedConnection
+        )
         self._mw.new_roi_Action.triggered.connect(
-            self._poi_manager_logic().reset_roi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().reset_roi, QtCore.Qt.QueuedConnection
+        )
         self._mw.refind_poi_Action.triggered.connect(
-            self._poi_manager_logic().optimise_poi_position, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().optimise_poi_position, QtCore.Qt.QueuedConnection
+        )
         self._mw.get_confocal_image_PushButton.clicked.connect(
-            lambda: self._poi_manager_logic().set_scan_image(True, self._data_scan_axes), QtCore.Qt.QueuedConnection)
+            lambda: self._poi_manager_logic().set_scan_image(
+                True, self._data_scan_axes
+            ),
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.set_poi_PushButton.clicked.connect(
-            self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection
+        )
         self._mw.delete_last_pos_Button.clicked.connect(
-            lambda: self._poi_manager_logic().delete_history_entry(-1), QtCore.Qt.QueuedConnection)
+            lambda: self._poi_manager_logic().delete_history_entry(-1),
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.manual_update_poi_PushButton.clicked.connect(
-            self._poi_manager_logic().move_roi_from_poi_position, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().move_roi_from_poi_position,
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.move_poi_PushButton.clicked.connect(
-            self._poi_manager_logic().set_poi_anchor_from_position, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().set_poi_anchor_from_position,
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.delete_poi_PushButton.clicked.connect(
-            lambda: self._poi_manager_logic().delete_poi(None), QtCore.Qt.QueuedConnection)
+            lambda: self._poi_manager_logic().delete_poi(None),
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.active_poi_ComboBox.activated[str].connect(
-            self._poi_manager_logic().set_active_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().set_active_poi, QtCore.Qt.QueuedConnection
+        )
         self._mw.goto_poi_after_update_checkBox.stateChanged.connect(
-            self._poi_manager_logic().set_move_scanner_after_optimise, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().set_move_scanner_after_optimise,
+            QtCore.Qt.QueuedConnection,
+        )
         self._mw.track_poi_Action.triggered.connect(
-            self._poi_manager_logic().toggle_periodic_refocus, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().toggle_periodic_refocus,
+            QtCore.Qt.QueuedConnection,
+        )
         self.sigTrackPeriodChanged.connect(
-            self._poi_manager_logic().set_refocus_period, QtCore.Qt.QueuedConnection)
-        self.sigPoiThresholdChanged.connect(
-            self._poi_manager_logic().set_poi_threshold)
-        self.sigPoiDiameterChanged.connect(
-            self._poi_manager_logic().set_poi_diameter)
+            self._poi_manager_logic().set_refocus_period, QtCore.Qt.QueuedConnection
+        )
+        self.sigPoiThresholdChanged.connect(self._poi_manager_logic().set_poi_threshold)
+        self.sigPoiDiameterChanged.connect(self._poi_manager_logic().set_poi_diameter)
         self.sigRoiNameChanged.connect(
-            self._poi_manager_logic().rename_roi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().rename_roi, QtCore.Qt.QueuedConnection
+        )
         self.sigPoiNameChanged.connect(
-            self._poi_manager_logic().rename_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().rename_poi, QtCore.Qt.QueuedConnection
+        )
         self.sigPoiNameTagChanged.connect(
-            self._poi_manager_logic().set_poi_nametag, QtCore.Qt.QueuedConnection)
-        self.sigAddPoiByClick.connect(self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection)
+            self._poi_manager_logic().set_poi_nametag, QtCore.Qt.QueuedConnection
+        )
+        self.sigAddPoiByClick.connect(
+            self._poi_manager_logic().add_poi, QtCore.Qt.QueuedConnection
+        )
         return
 
     def __disconnect_control_signals_to_logic(self):
@@ -554,32 +620,62 @@ class PoiManagerGui(GuiBase):
 
     def __connect_internal_signals(self):
         self._mw.track_period_SpinBox.editingFinished.connect(self.track_period_changed)
-        self._mw.poi_threshold_doubleSpinBox.editingFinished.connect(self.poi_threshold_changed)
-        self._mw.poi_diameter_doubleSpinBox.editingFinished.connect(self.poi_diameter_changed)
+        self._mw.poi_threshold_doubleSpinBox.editingFinished.connect(
+            self.poi_threshold_changed
+        )
+        self._mw.poi_diameter_doubleSpinBox.editingFinished.connect(
+            self.poi_diameter_changed
+        )
         self._mw.roi_name_LineEdit.editingFinished.connect(self.roi_name_changed)
         self._mw.poi_name_LineEdit.returnPressed.connect(self.poi_name_changed)
         self._mw.poi_nametag_LineEdit.editingFinished.connect(self.poi_nametag_changed)
         self._mw.save_roi_Action.triggered.connect(self.save_roi)
         self._mw.load_roi_Action.triggered.connect(self.load_roi)
-        self._mw.blink_correction_view_Action.triggered.connect(self.toggle_blink_correction)
+        self._mw.blink_correction_view_Action.triggered.connect(
+            self.toggle_blink_correction
+        )
         self._mw.poi_selector_Action.toggled.connect(self.toggle_poi_selector)
-        self._mw.restore_default_view_Action.triggered.connect(self.restore_default_view)
+        self._mw.restore_default_view_Action.triggered.connect(
+            self.restore_default_view
+        )
         self._mw.roi_map_view_Action.triggered.connect(
-            lambda: self.toggle_roi_map(self._mw.roi_map_view_Action.isChecked()))
+            lambda: self.toggle_roi_map(self._mw.roi_map_view_Action.isChecked())
+        )
         self._mw.poi_editor_view_Action.triggered.connect(
-            lambda: self._mw.poi_editor_dockWidget.setVisible(self._mw.poi_editor_view_Action.isChecked()))
+            lambda: self._mw.poi_editor_dockWidget.setVisible(
+                self._mw.poi_editor_view_Action.isChecked()
+            )
+        )
         self._mw.poi_tracker_view_Action.triggered.connect(
-            lambda: self._mw.poi_tracker_dockWidget.setVisible(self._mw.poi_tracker_view_Action.isChecked()))
+            lambda: self._mw.poi_tracker_dockWidget.setVisible(
+                self._mw.poi_tracker_view_Action.isChecked()
+            )
+        )
         self._mw.auto_pois_view_Action.triggered.connect(
-            lambda: self._mw.auto_pois_dockWidget.setVisible(self._mw.auto_pois_view_Action.isChecked()))
+            lambda: self._mw.auto_pois_dockWidget.setVisible(
+                self._mw.auto_pois_view_Action.isChecked()
+            )
+        )
         self._mw.auto_pois_view_Action.triggered.connect(
-            lambda: self._mw.auto_find_POIs_Action.setVisible(self._mw.auto_pois_view_Action.isChecked()))
+            lambda: self._mw.auto_find_POIs_Action.setVisible(
+                self._mw.auto_pois_view_Action.isChecked()
+            )
+        )
         self._mw.sample_shift_view_Action.triggered.connect(
-            lambda: self._mw.sample_shift_dockWidget.setVisible(self._mw.sample_shift_view_Action.isChecked()))
+            lambda: self._mw.sample_shift_dockWidget.setVisible(
+                self._mw.sample_shift_view_Action.isChecked()
+            )
+        )
         self._mw.roi_management_view_Action.triggered.connect(
-            lambda: self._mw.roi_management_ToolBar.setVisible(self._mw.roi_management_view_Action.isChecked()))
+            lambda: self._mw.roi_management_ToolBar.setVisible(
+                self._mw.roi_management_view_Action.isChecked()
+            )
+        )
         self._mw.poi_tools_view_Action.triggered.connect(
-            lambda: self._mw.poi_ToolBar.setVisible(self._mw.poi_tools_view_Action.isChecked()))
+            lambda: self._mw.poi_ToolBar.setVisible(
+                self._mw.poi_tools_view_Action.isChecked()
+            )
+        )
         return
 
     def __disconnect_internal_signals(self):
@@ -602,7 +698,7 @@ class PoiManagerGui(GuiBase):
         return
 
     def show(self):
-        """Make main window visible and put it above all other windows. """
+        """Make main window visible and put it above all other windows."""
         QtWidgets.QMainWindow.show(self._mw)
         self._mw.activateWindow()
         self._mw.raise_()
@@ -611,7 +707,7 @@ class PoiManagerGui(GuiBase):
     def toggle_blink_correction(self, is_active):
         self._mw.blink_correction_view_Action.setChecked(False)
         self.log.error("Blink correction is currently not implemented.")
-        #self._mw.roi_image.activate_blink_correction(is_active)
+        # self._mw.roi_image.activate_blink_correction(is_active)
         return
 
     @QtCore.Slot(bool)
@@ -656,20 +752,24 @@ class PoiManagerGui(GuiBase):
     @QtCore.Slot(dict)
     def update_roi(self, roi_dict):
         if not isinstance(roi_dict, dict):
-            self.log.error('ROI parameters to update must be given in a single dictionary.')
+            self.log.error(
+                "ROI parameters to update must be given in a single dictionary."
+            )
             return
 
-        if 'name' in roi_dict:
-            self._update_roi_name(name=roi_dict['name'])
-        if 'poi_nametag' in roi_dict:
-            self._update_poi_nametag(tag=roi_dict['poi_nametag'])
-        if 'history' in roi_dict:
-            self._update_roi_history(history=roi_dict['history'])
-        if 'scan_image' in roi_dict and 'scan_image_extent' in roi_dict:
-            self._update_scan_image(scan_image=roi_dict['scan_image'],
-                                    image_extent=roi_dict['scan_image_extent'])
-        if 'pois' in roi_dict:
-            self._update_pois(poi_dict=roi_dict['pois'])
+        if "name" in roi_dict:
+            self._update_roi_name(name=roi_dict["name"])
+        if "poi_nametag" in roi_dict:
+            self._update_poi_nametag(tag=roi_dict["poi_nametag"])
+        if "history" in roi_dict:
+            self._update_roi_history(history=roi_dict["history"])
+        if "scan_image" in roi_dict and "scan_image_extent" in roi_dict:
+            self._update_scan_image(
+                scan_image=roi_dict["scan_image"],
+                image_extent=roi_dict["scan_image_extent"],
+            )
+        if "pois" in roi_dict:
+            self._update_pois(poi_dict=roi_dict["pois"])
         return
 
     @QtCore.Slot(bool, float, float)
@@ -754,12 +854,17 @@ class PoiManagerGui(GuiBase):
         else:
             active_poi_pos = np.zeros(3)
         self._mw.poi_coords_label.setText(
-            '({0:.2r}m, {1:.2r}m, {2:.2r}m)'.format(ScaledFloat(active_poi_pos[0]),
-                                                    ScaledFloat(active_poi_pos[1]),
-                                                    ScaledFloat(active_poi_pos[2])))
+            "({0:.2r}m, {1:.2r}m, {2:.2r}m)".format(
+                ScaledFloat(active_poi_pos[0]),
+                ScaledFloat(active_poi_pos[1]),
+                ScaledFloat(active_poi_pos[2]),
+            )
+        )
 
         if name in self._markers:
-            self._markers[name].set_radius(self._poi_manager_logic().optimise_xy_size / np.sqrt(2))
+            self._markers[name].set_radius(
+                self._poi_manager_logic().optimise_xy_size / np.sqrt(2)
+            )
             self._markers[name].select()
         return
 
@@ -780,13 +885,13 @@ class PoiManagerGui(GuiBase):
 
     @QtCore.Slot()
     def roi_name_changed(self):
-        """ Set the name of the current ROI."""
+        """Set the name of the current ROI."""
         self.sigRoiNameChanged.emit(self._mw.roi_name_LineEdit.text())
         return
 
     @QtCore.Slot()
     def poi_name_changed(self):
-        """ Change the name of the active poi."""
+        """Change the name of the active poi."""
         new_name = self._mw.poi_name_LineEdit.text()
         if self._mw.active_poi_ComboBox.currentText() == new_name or not new_name:
             return
@@ -795,7 +900,7 @@ class PoiManagerGui(GuiBase):
 
         # After POI name is changed, empty name field
         self._mw.poi_name_LineEdit.blockSignals(True)
-        self._mw.poi_name_LineEdit.setText('')
+        self._mw.poi_name_LineEdit.setText("")
         self._mw.poi_name_LineEdit.blockSignals(False)
         return
 
@@ -806,7 +911,7 @@ class PoiManagerGui(GuiBase):
 
     @QtCore.Slot()
     def save_roi(self):
-        """ Save ROI to file."""
+        """Save ROI to file."""
         roi_name = self._mw.roi_name_LineEdit.text()
         self._poi_manager_logic().rename_roi(roi_name)
         self._poi_manager_logic().save_roi()
@@ -814,30 +919,38 @@ class PoiManagerGui(GuiBase):
 
     @QtCore.Slot()
     def load_roi(self):
-        """ Load a saved ROI from file."""
-        this_file = QtWidgets.QFileDialog.getOpenFileName(self._mw,
-                                                          'Open ROI',
-                                                          self._poi_manager_logic().module_default_data_dir,
-                                                          'Data files (*.dat)')[0]
+        """Load a saved ROI from file."""
+        this_file = QtWidgets.QFileDialog.getOpenFileName(
+            self._mw,
+            "Open ROI",
+            self._poi_manager_logic().module_default_data_dir,
+            "Data files (*.dat)",
+        )[0]
         if this_file:
             self._poi_manager_logic().load_roi(complete_path=this_file)
         return
 
     @QtCore.Slot()
     def delete_all_pois_clicked(self):
-        result = QtWidgets.QMessageBox.question(self._mw, 'Qudi: Delete all POIs?',
-                                                'Are you sure to delete all POIs?',
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
+        result = QtWidgets.QMessageBox.question(
+            self._mw,
+            "Qudi: Delete all POIs?",
+            "Are you sure to delete all POIs?",
+            QtWidgets.QMessageBox.Yes,
+            QtWidgets.QMessageBox.No,
+        )
         if result == QtWidgets.QMessageBox.Yes:
             self._poi_manager_logic().delete_all_pois()
         return
 
     def _update_scan_image(self, scan_image, image_extent):
         """
-        @param scan_image:
-        @param image_extent:
+        Parameters
+        ----------
+        scan_image :
+        image_extent :
         """
+
         if scan_image is not None:
             self._mw.roi_image.set_image(image=scan_image)
             self._mw.roi_image.image_item.set_image_extent(image_extent)
@@ -851,7 +964,7 @@ class PoiManagerGui(GuiBase):
 
     def _update_poi_nametag(self, tag):
         if tag is None:
-            tag = ''
+            tag = ""
         self._mw.poi_nametag_LineEdit.blockSignals(True)
         self._mw.poi_nametag_LineEdit.setText(tag)
         self._mw.poi_nametag_LineEdit.blockSignals(False)
@@ -870,21 +983,21 @@ class PoiManagerGui(GuiBase):
             history = self._poi_manager_logic().roi_pos_history
 
         if history.shape[1] != 4:
-            self.log.error('ROI history must be an array of type float[][4].')
+            self.log.error("ROI history must be an array of type float[][4].")
             return
 
         max_time = np.max(history[:, 0])
         if max_time < 300:
-            self._mw.sample_shift_ViewWidget.setLabel('bottom', 'Time', units='s')
+            self._mw.sample_shift_ViewWidget.setLabel("bottom", "Time", units="s")
             time_arr = history[:, 0]
         elif max_time < 7200:
-            self._mw.sample_shift_ViewWidget.setLabel('bottom', 'Time', units='min')
+            self._mw.sample_shift_ViewWidget.setLabel("bottom", "Time", units="min")
             time_arr = history[:, 0] / 60
         elif max_time < 172800:
-            self._mw.sample_shift_ViewWidget.setLabel('bottom', 'Time', units='h')
+            self._mw.sample_shift_ViewWidget.setLabel("bottom", "Time", units="h")
             time_arr = history[:, 0] / 3600
         else:
-            self._mw.sample_shift_ViewWidget.setLabel('bottom', 'Time', units='d')
+            self._mw.sample_shift_ViewWidget.setLabel("bottom", "Time", units="d")
             time_arr = history[:, 0] / 86400
 
         self.x_shift_plot.setData(time_arr, history[:, 1])
@@ -893,7 +1006,7 @@ class PoiManagerGui(GuiBase):
         return
 
     def _update_pois(self, poi_dict):
-        """ Populate the dropdown box for selecting a poi. """
+        """Populate the dropdown box for selecting a poi."""
         self._mw.active_poi_ComboBox.blockSignals(True)
 
         self._mw.active_poi_ComboBox.clear()
@@ -926,9 +1039,12 @@ class PoiManagerGui(GuiBase):
             self._markers[active_poi].select()
             active_poi_pos = poi_dict[active_poi]
             self._mw.poi_coords_label.setText(
-                '({0:.2r}m, {1:.2r}m, {2:.2r}m)'.format(ScaledFloat(active_poi_pos[0]),
-                                                        ScaledFloat(active_poi_pos[1]),
-                                                        ScaledFloat(active_poi_pos[2])))
+                "({0:.2r}m, {1:.2r}m, {2:.2r}m)".format(
+                    ScaledFloat(active_poi_pos[0]),
+                    ScaledFloat(active_poi_pos[1]),
+                    ScaledFloat(active_poi_pos[2]),
+                )
+            )
         else:
             self._mw.active_poi_ComboBox.setCurrentIndex(-1)
 
@@ -936,25 +1052,30 @@ class PoiManagerGui(GuiBase):
         return
 
     def _add_poi_marker(self, name, position):
-        """ Add a circular POI marker to the ROI scan image. """
+        """Add a circular POI marker to the ROI scan image."""
         if name:
             if name in self._markers:
-                self.log.error('Unable to add POI marker to ROI image. POI marker already present.')
+                self.log.error(
+                    "Unable to add POI marker to ROI image. POI marker already present."
+                )
                 return
-            marker = PoiMarker(position=position[:2],
-                               view_widget=self._mw.roi_image.plot_widget,
-                               poi_name=name,
-                               radius=self._poi_manager_logic().optimise_xy_size / np.sqrt(2),
-                               movable=False)
+            marker = PoiMarker(
+                position=position[:2],
+                view_widget=self._mw.roi_image.plot_widget,
+                poi_name=name,
+                radius=self._poi_manager_logic().optimise_xy_size / np.sqrt(2),
+                movable=False,
+            )
             # Add to the scan image widget
             marker.add_to_view_widget()
             marker.sigPoiSelected.connect(
-                self._poi_manager_logic().set_active_poi, QtCore.Qt.QueuedConnection)
+                self._poi_manager_logic().set_active_poi, QtCore.Qt.QueuedConnection
+            )
             self._markers[name] = marker
         return
 
     def _remove_poi_marker(self, name):
-        """ Remove the POI marker for a POI that was deleted. """
+        """Remove the POI marker for a POI that was deleted."""
         if name in self._markers:
             self._markers[name].delete_from_view_widget()
             self._markers[name].sigPoiSelected.disconnect()

@@ -172,31 +172,47 @@ class IxonUltra(CameraInterface):
         self._shut_down()
 
     def get_name(self):
-        """ Retrieve an identifier of the camera that the GUI can print
+        """ Retrieve an identifier of the camera that the GUI can print.
 
-        @return string: name for the camera
-        """
+    Returns
+    -------
+    str
+        Name for the camera.
+    """
+
         return self._camera_name
 
     def get_size(self):
-        """ Retrieve size of the image in pixel
+        """ Retrieve size of the image in pixels.
 
-        @return tuple: Size (width, height)
-        """
+    Returns
+    -------
+    tuple
+        Size (width, height).
+    """
+
         return self._width, self._height
 
     def support_live_acquisition(self):
-        """ Return whether or not the camera can take care of live acquisition
+        """ Return whether or not the camera can take care of live acquisition.
 
-        @return bool: True if supported, False if not
-        """
+    Returns
+    -------
+    bool
+        True if supported, False if not.
+    """
+
         return False
 
     def start_live_acquisition(self):
-        """ Start a continuous acquisition
+        """ Start a continuous acquisition.
 
-        @return bool: Success ?
-        """
+    Returns
+    -------
+    bool
+        Success ?.
+    """
+
         if self._support_live:
             self._live = True
             self._acquiring = False
@@ -204,10 +220,14 @@ class IxonUltra(CameraInterface):
         return False
 
     def start_single_acquisition(self):
-        """ Start a single acquisition
+        """ Start a single acquisition.
 
-        @return bool: Success ?
-        """
+    Returns
+    -------
+    bool
+        Success ?.
+    """
+
         if self._shutter == 'closed':
             msg = self._set_shutter(0, 1, 0.1, 0.1)
             if msg == 'DRV_SUCCESS':
@@ -227,10 +247,14 @@ class IxonUltra(CameraInterface):
             return True
 
     def stop_acquisition(self):
-        """ Stop/abort live or single acquisition
+        """ Stop/abort live or single acquisition.
 
-        @return bool: Success ?
-        """
+    Returns
+    -------
+    bool
+        Success ?.
+    """
+
         msg = self._abort_acquisition()
         if msg == "DRV_SUCCESS":
             self._live = False
@@ -240,12 +264,15 @@ class IxonUltra(CameraInterface):
             return False
 
     def get_acquired_data(self):
-        """ Return an array of last acquired image.
+        """ Return an array of the last acquired image.
 
-        @return numpy array: image data in format [[row],[row]...]
+    Returns
+    -------
+    numpy.ndarray
+        Image data in format [[row],[row]...].
 
-        Each pixel might be a float, integer or sub pixels
-        """
+    Each pixel might be a float, integer or sub pixels.
+    """
 
         width = self._width
         height = self._height
@@ -291,12 +318,19 @@ class IxonUltra(CameraInterface):
         return image_array
 
     def set_exposure(self, exposure):
-        """ Set the exposure time in seconds
+        """ Set the exposure time in seconds.
 
-        @param float time: desired new exposure time
+    Parameters
+    ----------
+    exposure : float
+        Desired new exposure time.
 
-        @return bool: Success?
-        """
+    Returns
+    -------
+    bool
+        Success ?.
+    """
+
         msg = self._set_exposuretime(exposure)
         if msg == "DRV_SUCCESS":
             self._exposure = exposure
@@ -305,10 +339,14 @@ class IxonUltra(CameraInterface):
             return False
 
     def get_exposure(self):
-        """ Get the exposure time in seconds
+        """ Get the exposure time in seconds.
 
-        @return float exposure time
-        """
+    Returns
+    -------
+    float
+        Exposure time.
+    """
+
         self._get_acquisition_timings()
         return self._exposure
 
@@ -316,12 +354,19 @@ class IxonUltra(CameraInterface):
     # this camera model. Just keeping it in mind for now.
     #TODO: Not really funcitonal right now.
     def set_gain(self, gain):
-        """ Set the gain
+        """ Set the gain.
 
-        @param float gain: desired new gain
+    Parameters
+    ----------
+    gain : float
+        Desired new gain.
 
-        @return float: new exposure gain
-        """
+    Returns
+    -------
+    float
+        New exposure gain.
+    """
+
         n_pre_amps = self._get_number_preamp_gains()
         msg = ''
         if (gain >= 0) & (gain < n_pre_amps):
@@ -335,18 +380,26 @@ class IxonUltra(CameraInterface):
         return self._gain
 
     def get_gain(self):
-        """ Get the gain
+        """ Get the gain.
 
-        @return float: exposure gain
-        """
+    Returns
+    -------
+    float
+        Exposure gain.
+    """
+
         _, self._gain = self._get_preamp_gain()
         return self._gain
 
     def get_ready_state(self):
         """ Is the camera ready for an acquisition ?
 
-        @return bool: ready ?
-        """
+    Returns
+    -------
+    bool
+        Ready ?.
+    """
+
         status = c_int()
         self._get_status(status)
         if ERROR_DICT[status.value] == 'DRV_IDLE':
@@ -430,33 +483,66 @@ class IxonUltra(CameraInterface):
 # setter functions
 
     def _set_shutter(self, typ, mode, closingtime, openingtime):
-        """
-        @param int typ:   0 Output TTL low signal to open shutter
-                          1 Output TTL high signal to open shutter
-        @param int mode:  0 Fully Auto
-                          1 Permanently Open
-                          2 Permanently Closed
-                          4 Open for FVB series
-                          5 Open for any series
-        """
+        """ Set the shutter.
+
+    Parameters
+    ----------
+    typ : int
+        0 Output TTL low signal to open shutter.
+        1 Output TTL high signal to open shutter.
+    mode : int
+        0 Fully Auto.
+        1 Permanently Open.
+        2 Permanently Closed.
+        4 Open for FVB series.
+        5 Open for any series.
+    closingtime : float
+        Time to close the shutter.
+    openingtime : float
+        Time to open the shutter.
+
+    Returns
+    -------
+    str
+        Status message.
+    """
+
         typ, mode, closingtime, openingtime = c_int(typ), c_int(mode), c_float(closingtime), c_float(openingtime)
         error_code = self.dll.SetShutter(typ, mode, closingtime, openingtime)
 
         return ERROR_DICT[error_code]
 
     def _set_exposuretime(self, time):
-        """
-        @param float time: exposure duration
-        @return string answer from the camera
-        """
+        """ Set the exposure time.
+
+    Parameters
+    ----------
+    time : float
+        Exposure duration.
+
+    Returns
+    -------
+    str
+        Status message.
+    """
+
         error_code = self.dll.SetExposureTime(c_float(time))
         return ERROR_DICT[error_code]
 
     def _set_read_mode(self, mode):
-        """
-        @param string mode: string corresponding to certain ReadMode
-        @return string answer from the camera
-        """
+        """ Set the read mode.
+
+    Parameters
+    ----------
+    mode : str
+        String corresponding to certain ReadMode.
+
+    Returns
+    -------
+    int
+        Status message.
+    """
+
         check_val = 0
 
         if hasattr(ReadMode, mode):
@@ -477,10 +563,19 @@ class IxonUltra(CameraInterface):
         return check_val
 
     def _set_trigger_mode(self, mode):
-        """
-        @param string mode: string corresponding to certain TriggerMode
-        @return string: answer from the camera
-        """
+        """ Set the trigger mode.
+
+    Parameters
+    ----------
+    mode : str
+        String corresponding to certain TriggerMode.
+
+    Returns
+    -------
+    int
+        Status message.
+    """
+
         check_val = 0
         if hasattr(TriggerMode, mode):
             n_mode = c_int(getattr(TriggerMode, mode).value)
@@ -497,17 +592,29 @@ class IxonUltra(CameraInterface):
         return check_val
 
     def _set_image(self, hbin, vbin, hstart, hend, vstart, vend):
-        """
-        This function will set the horizontal and vertical binning to be used when taking a full resolution image.
-        Parameters
-        @param int hbin: number of pixels to bin horizontally
-        @param int vbin: number of pixels to bin vertically. int hstart: Start column (inclusive)
-        @param int hend: End column (inclusive)
-        @param int vstart: Start row (inclusive)
-        @param int vend: End row (inclusive).
+        """ Set the image parameters.
 
-        @return string containing the status message returned by the function call
-        """
+    Parameters
+    ----------
+    hbin : int
+        Number of pixels to bin horizontally.
+    vbin : int
+        Number of pixels to bin vertically.
+    hstart : int
+        Start column (inclusive).
+    hend : int
+        End column (inclusive).
+    vstart : int
+        Start row (inclusive).
+    vend : int
+        End row (inclusive).
+
+    Returns
+    -------
+    str
+        Status message.
+    """
+
         hbin, vbin, hstart, hend, vstart, vend = c_int(hbin), c_int(vbin),\
                                                  c_int(hstart), c_int(hend), c_int(vstart), c_int(vend)
 
@@ -527,17 +634,36 @@ class IxonUltra(CameraInterface):
         return ERROR_DICT[error_code]
 
     def _set_output_amplifier(self, typ):
-        """
-        @param c_int typ: 0: EMCCD gain, 1: Conventional CCD register
-        @return string: error code
-        """
+        """ Set the output amplifier.
+
+    Parameters
+    ----------
+    typ : c_int
+        0: EMCCD gain, 1: Conventional CCD register.
+
+    Returns
+    -------
+    str
+        Error code.
+    """
+
         error_code = self.dll.SetOutputAmplifier(typ)
         return ERROR_DICT[error_code]
 
     def _set_preamp_gain(self, index):
-        """
-        @param c_int index: 0 - (Number of Preamp gains - 1)
-        """
+        """ Set the preamp gain.
+
+    Parameters
+    ----------
+    index : c_int
+        0 - (Number of Preamp gains - 1).
+
+    Returns
+    -------
+    str
+        Error code.
+    """
+
         error_code = self.dll.SetPreAmpGain(index)
         return ERROR_DICT[error_code]
 
@@ -547,11 +673,19 @@ class IxonUltra(CameraInterface):
         return  ERROR_DICT[error_code]
 
     def _set_acquisition_mode(self, mode):
-        """
-        Function to set the acquisition mode
-        @param mode:
-        @return:
-        """
+        """ Set the acquisition mode.
+
+    Parameters
+    ----------
+    mode : str
+        Desired acquisition mode.
+
+    Returns
+    -------
+    int
+        Status message.
+    """
+
         check_val = 0
         if hasattr(AcquisitionMode, mode):
             n_mode = c_int(getattr(AcquisitionMode, mode).value)

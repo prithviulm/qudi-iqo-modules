@@ -140,10 +140,15 @@ method inside this thread.
            
            
    def run_in_thread(thread_name='MyThread'):
-       """ This function will spawn and run a new worker thread and waits until it has finished.
-       
-       @param str thread_name: The custom name of the thread to spawn
        """
+This function spawns and runs a new worker thread and waits until it has finished.
+
+Parameters
+----------
+thread_name : str
+    The custom name of the thread to spawn.
+"""
+
        # Check if thread manager can be retrieved from the qudi main application
        thread_manager = ThreadManager.instance()
        if thread_manager is None:

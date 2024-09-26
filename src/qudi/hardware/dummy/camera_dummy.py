@@ -124,12 +124,20 @@ class CameraDummy(CameraInterface):
         return data.transpose()
 
     def set_exposure(self, exposure):
-        """ Set the exposure time in seconds
-
-        @param float time: desired new exposure time
-
-        @return float: setted new exposure time
         """
+Set the exposure time in seconds.
+
+Parameters
+----------
+time : float
+    Desired new exposure time.
+
+Returns
+-------
+float
+    The newly set exposure time.
+"""
+
         self._exposure = exposure
         return self._exposure
 
@@ -141,12 +149,20 @@ class CameraDummy(CameraInterface):
         return self._exposure
 
     def set_gain(self, gain):
-        """ Set the gain
-
-        @param float gain: desired new gain
-
-        @return float: new exposure gain
         """
+Set the gain.
+
+Parameters
+----------
+gain : float
+    Desired new gain.
+
+Returns
+-------
+float
+    The newly set gain.
+"""
+
         self._gain = gain
         return self._gain
 

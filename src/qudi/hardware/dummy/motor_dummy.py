@@ -168,23 +168,24 @@ class MotorDummy(Base, MotorInterface):
         return constraints
 
     def move_rel(self,  param_dict):
-        """ Moves stage in given direction (relative movement)
-
-        @param dict param_dict: dictionary, which passes all the relevant
-                                parameters, which should be changed.
-                                With get_constraints() you can obtain all
-                                possible parameters of that stage. According to
-                                this parameter set you have to pass a dictionary
-                                with keys that are called like the parameters
-                                from get_constraints() and assign a SI value to
-                                that. For a movement in x the dict should e.g.
-                                have the form:
-                                    dict = { 'x' : 23 }
-                                where the label 'x' corresponds to the chosen
-                                axis label.
-
-        A smart idea would be to ask the position after the movement.
         """
+Moves stage in the given direction (relative movement).
+
+Parameters
+----------
+param_dict : dict
+    Dictionary containing the relevant parameters to change. You can obtain all 
+    possible parameters of the stage using `get_constraints()`. According to 
+    this parameter set, you need to pass a dictionary with keys corresponding 
+    to the parameters from `get_constraints()` and assign an SI value to them.
+    For example, to move in the x-direction, the dictionary should be:
+    {'x': 23}, where 'x' corresponds to the chosen axis label.
+
+Notes
+-----
+It is a good practice to check the position after the movement.
+"""
+
         curr_pos_dict = self.get_pos()
         constraints = self.get_constraints()
 
@@ -259,15 +260,21 @@ class MotorDummy(Base, MotorInterface):
 
 
     def move_abs(self, param_dict):
-        """ Moves stage to absolute position (absolute movement)
-
-        @param dict param_dict: dictionary, which passes all the relevant
-                                parameters, which should be changed. Usage:
-                                 {'axis_label': <a-value>}.
-                                 'axis_label' must correspond to a label given
-                                 to one of the axis.
-        A smart idea would be to ask the position after the movement.
         """
+Moves the stage to an absolute position (absolute movement).
+
+Parameters
+----------
+param_dict : dict
+    Dictionary containing the relevant parameters to change. Usage:
+    {'axis_label': <a-value>}, where 'axis_label' corresponds to a label given 
+    to one of the axes.
+
+Notes
+-----
+It is a good practice to check the position after the movement.
+"""
+
         constraints = self.get_constraints()
 
         if param_dict.get(self._x_axis.label) is not None:
@@ -342,17 +349,21 @@ class MotorDummy(Base, MotorInterface):
         return 0
 
     def get_pos(self, param_list=None):
-        """ Gets current position of the stage arms
-
-        @param list param_list: optional, if a specific position of an axis
-                                is desired, then the labels of the needed
-                                axis should be passed as the param_list.
-                                If nothing is passed, then from each axis the
-                                position is asked.
-
-        @return dict: with keys being the axis labels and item the current
-                      position.
         """
+Gets the current position of the stage arms.
+
+Parameters
+----------
+param_list : list, optional
+    If a specific position of an axis is desired, provide a list of axis labels.
+    If nothing is passed, the position of each axis will be returned.
+
+Returns
+-------
+dict
+    A dictionary with axis labels as keys and their current positions as values.
+"""
+
         pos = {}
         if param_list is not None:
             if self._x_axis.label in param_list:
@@ -376,16 +387,20 @@ class MotorDummy(Base, MotorInterface):
         return pos
 
     def get_status(self, param_list=None):
-        """ Get the status of the position
-
-        @param list param_list: optional, if a specific status of an axis
-                                is desired, then the labels of the needed
-                                axis should be passed in the param_list.
-                                If nothing is passed, then from each axis the
-                                status is asked.
-
-        @return dict: with the axis label as key and the status number as item.
         """
+Get the status of the position.
+
+Parameters
+----------
+param_list : list, optional
+    If a specific status of an axis is desired, provide a list of axis labels.
+    If nothing is passed, the status of each axis will be returned.
+
+Returns
+-------
+dict
+    A dictionary with axis labels as keys and their status numbers as values.
+"""
 
         status = {}
         if param_list is not None:
@@ -410,20 +425,26 @@ class MotorDummy(Base, MotorInterface):
         return status
 
     def calibrate(self, param_list=None):
-        """ Calibrates the stage.
-
-        @param dict param_list: param_list: optional, if a specific calibration
-                                of an axis is desired, then the labels of the
-                                needed axis should be passed in the param_list.
-                                If nothing is passed, then all connected axis
-                                will be calibrated.
-
-        @return int: error code (0:OK, -1:error)
-
-        After calibration the stage moves to home position which will be the
-        zero point for the passed axis. The calibration procedure will be
-        different for each stage.
         """
+Calibrates the stage.
+
+Parameters
+----------
+param_list : dict, optional
+    If a specific calibration of an axis is desired, provide a list of axis 
+    labels. If nothing is passed, all connected axes will be calibrated.
+
+Returns
+-------
+int
+    Error code (0: OK, -1: error).
+
+Notes
+-----
+After calibration, the stage moves to the home position, which becomes the zero
+point for the passed axis. The calibration procedure may vary for each stage.
+"""
+
         if param_list is not None:
             if self._x_axis.label in param_list:
                 self._x_axis.pos = 0.0
@@ -446,16 +467,21 @@ class MotorDummy(Base, MotorInterface):
         return 0
 
     def get_velocity(self, param_list=None):
-        """ Gets the current velocity for all connected axes.
-
-        @param dict param_list: optional, if a specific velocity of an axis
-                                is desired, then the labels of the needed
-                                axis should be passed as the param_list.
-                                If nothing is passed, then from each axis the
-                                velocity is asked.
-
-        @return dict : with the axis label as key and the velocity as item.
         """
+Gets the current velocity for all connected axes.
+
+Parameters
+----------
+param_list : dict, optional
+    If a specific velocity of an axis is desired, provide a list of axis labels.
+    If nothing is passed, the velocity of each axis will be returned.
+
+Returns
+-------
+dict
+    A dictionary with axis labels as keys and their corresponding velocities as values.
+"""
+
         vel = {}
         if param_list is not None:
             if self._x_axis.label in param_list:
@@ -476,14 +502,17 @@ class MotorDummy(Base, MotorInterface):
         return vel
 
     def set_velocity(self, param_dict=None):
-        """ Write new value for velocity.
-
-        @param dict param_dict: dictionary, which passes all the relevant
-                                parameters, which should be changed. Usage:
-                                 {'axis_label': <the-velocity-value>}.
-                                 'axis_label' must correspond to a label given
-                                 to one of the axis.
         """
+Write a new value for velocity.
+
+Parameters
+----------
+param_dict : dict
+    Dictionary containing the relevant parameters to change. Usage:
+    {'axis_label': <the-velocity-value>}, where 'axis_label' must correspond 
+    to a label given to one of the axes.
+"""
+
         constraints = self.get_constraints()
 
         if param_dict.get(self._x_axis.label) is not None:

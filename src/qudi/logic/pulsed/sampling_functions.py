@@ -211,11 +211,19 @@ class SamplingFunctions:
     @staticmethod
     def is_sampling_function_class(obj):
         """
-        Helper method to check if an object is a valid sampling function class.
+Helper method to check if an object is a valid sampling function class.
 
-        @param object obj: object to check
-        @return bool: True if obj is a valid sampling function class, False otherwise
-        """
+Parameters
+----------
+obj : object
+    Object to check.
+
+Returns
+-------
+bool
+    True if the object is a valid sampling function class, False otherwise.
+"""
+
         if inspect.isclass(obj):
             return SamplingBase in inspect.getmro(obj) and object not in obj.__bases__
         return False

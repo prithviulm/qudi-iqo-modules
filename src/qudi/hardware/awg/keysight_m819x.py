@@ -21,6 +21,7 @@ This file contains the Qudi hardware module for the Keysight M819X AWG series.
 """
 
 import re
+
 try:
     import pyvisa as visa
 except ImportError:
@@ -35,7 +36,11 @@ from abc import abstractmethod
 
 from qudi.core.configoption import ConfigOption
 from qudi.util.paths import get_appdata_dir
-from qudi.interface.pulser_interface import PulserInterface, PulserConstraints, SequenceOption
+from qudi.interface.pulser_interface import (
+    PulserInterface,
+    PulserConstraints,
+    SequenceOption,
+)
 
 
 class AWGM819X(PulserInterface):
@@ -44,39 +49,45 @@ class AWGM819X(PulserInterface):
     device, use the non-abstract classes in this file.
     """
 
-    _visa_address = ConfigOption(name='awg_visa_address',
-                                 default='TCPIP0::localhost::hislip0::INSTR',
-                                 missing='warn')
-    _awg_timeout = ConfigOption(name='awg_timeout', default=20, missing='warn')
+    _visa_address = ConfigOption(
+        name="awg_visa_address",
+        default="TCPIP0::localhost::hislip0::INSTR",
+        missing="warn",
+    )
+    _awg_timeout = ConfigOption(name="awg_timeout", default=20, missing="warn")
     _pulsed_file_dir = ConfigOption(
-        name='pulsed_file_dir',
-        default=os.path.join(get_appdata_dir(True), 'pulsed_file_dir'),
-        missing='warn'
+        name="pulsed_file_dir",
+        default=os.path.join(get_appdata_dir(True), "pulsed_file_dir"),
+        missing="warn",
     )
     _assets_storage_path = ConfigOption(
-        name='assets_storage_path',
-        default=os.path.join(get_appdata_dir(True), 'saved_pulsed_assets'),
-        missing='warn'
+        name="assets_storage_path",
+        default=os.path.join(get_appdata_dir(True), "saved_pulsed_assets"),
+        missing="warn",
     )
-    _sample_rate_div = ConfigOption(name='sample_rate_div', default=1, missing='warn')
+    _sample_rate_div = ConfigOption(name="sample_rate_div", default=1, missing="warn")
     _dac_amp_mode = None
     _wave_mem_mode = None
-    _wave_file_extension = '.bin'
-    _wave_transfer_datatype = 'h'
+    _wave_file_extension = ".bin"
+    _wave_transfer_datatype = "h"
 
     # explicitly set low/high levels for [[d_ch1_low, d_ch1_high], [d_ch2_low, d_ch2_high], ...]
-    _d_ch_level_low_high = ConfigOption(name='d_ch_level_low_high', default=[], missing='nothing')
+    _d_ch_level_low_high = ConfigOption(
+        name="d_ch_level_low_high", default=[], missing="nothing"
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._BRAND = ''
-        self._MODEL = ''
-        self._SERIALNUMBER = ''
-        self._FIRMWARE_VERSION = ''
+        self._BRAND = ""
+        self._MODEL = ""
+        self._SERIALNUMBER = ""
+        self._FIRMWARE_VERSION = ""
 
-        self._sequence_mode = False         # set in on_activate()
-        self._debug_check_all_commands = False       # # For development purpose, might slow down
+        self._sequence_mode = False  # set in on_activate()
+        self._debug_check_all_commands = (
+            False  # # For development purpose, might slow down
+        )
 
     @property
     @abstractmethod
@@ -94,12 +105,13 @@ class AWGM819X(PulserInterface):
         pass
 
     def on_activate(self):
-        """Initialisation performed during activation of the module.
-        """
+        """Initialisation performed during activation of the module."""
         self._rm = visa.ResourceManager()
 
-        self._pulsed_file_dir = self._pulsed_file_dir.replace('/', '\\')    # as expected from awg drier
-        self._assets_storage_path = self._assets_storage_path.replace('/', '\\')
+        self._pulsed_file_dir = self._pulsed_file_dir.replace(
+            "/", "\\"
+        )  # as expected from awg drier
+        self._assets_storage_path = self._assets_storage_path.replace("/", "\\")
         self._create_dir(self._pulsed_file_dir)
         self._create_dir(self._assets_storage_path)
 
@@ -110,35 +122,39 @@ class AWGM819X(PulserInterface):
             self.awg.timeout = self._awg_timeout * 1000
         except:
             self.awg = None
-            self.log.error('VISA address "{0}" not found by the pyVISA resource manager.\nCheck '
-                           'the connection by using for example "Keysight Connection Expert".'
-                           ''.format(self._visa_address))
+            self.log.error(
+                'VISA address "{0}" not found by the pyVISA resource manager.\nCheck '
+                'the connection by using for example "Keysight Connection Expert".'
+                "".format(self._visa_address)
+            )
             return
 
         if self.awg is not None:
-            mess = self.query('*IDN?').split(',')
+            mess = self.query("*IDN?").split(",")
             self._BRAND = mess[0]
             self._MODEL = mess[1]
             self._SERIALNUMBER = mess[2]
             self._FIRMWARE_VERSION = mess[3]
 
-            self.log.info('Load the device model "{0}" from "{1}" with '
-                          'serial number "{2}" and firmware version "{3}" '
-                          'successfully.'.format(self._MODEL, self._BRAND,
-                                                 self._SERIALNUMBER,
-                                                 self._FIRMWARE_VERSION))
-            self._sequence_mode = 'SEQ' in self.query('*OPT?').split(',')
+            self.log.info(
+                'Load the device model "{0}" from "{1}" with '
+                'serial number "{2}" and firmware version "{3}" '
+                "successfully.".format(
+                    self._MODEL, self._BRAND, self._SERIALNUMBER, self._FIRMWARE_VERSION
+                )
+            )
+            self._sequence_mode = "SEQ" in self.query("*OPT?").split(",")
         self._init_device()
 
     def on_deactivate(self):
-        """ Required tasks to be performed during deactivation of the module. """
+        """Required tasks to be performed during deactivation of the module."""
 
         try:
             self.awg.close()
             self.connected = False
         except:
-            self.log.warning('Closing AWG connection using pyvisa failed.')
-        self.log.info('Closed connection to AWG')
+            self.log.warning("Closing AWG connection using pyvisa failed.")
+        self.log.info("Closed connection to AWG")
 
     @abstractmethod
     def get_constraints(self):
@@ -172,7 +188,7 @@ class AWGM819X(PulserInterface):
         pass
 
     def pulser_on(self):
-        """ Switches the pulsing device on.
+        """Switches the pulsing device on.
 
         @return int: error code (0:OK, -1:error, higher number corresponds to
                                  current status of the device. Check then the
@@ -191,8 +207,8 @@ class AWGM819X(PulserInterface):
         while not self._is_output_on():
             time.sleep(0.25)
 
-        self.write(':INIT:IMM')
-        self.write('*WAI')
+        self.write(":INIT:IMM")
+        self.write("*WAI")
 
         # in dynamic mode with external pattern jump, we start by a software trigger
         # subsequent triggers are generated by external control hw
@@ -202,13 +218,13 @@ class AWGM819X(PulserInterface):
         return self.get_status()[0]
 
     def pulser_off(self):
-        """ Switches the pulsing device off.
+        """Switches the pulsing device off.
         @return int: error code (0:OK, -1:error, higher number corresponds to
                                  current status of the device. Check then the
                                  class variable status_dic.)
         """
 
-        self.write(':ABOR')
+        self.write(":ABOR")
 
         # wait until the AWG has actually stopped
         while self._is_awg_running():
@@ -217,43 +233,49 @@ class AWGM819X(PulserInterface):
         return self.get_status()[0]
 
     def load_waveform(self, load_dict, to_nextfree_segment=False):
-        """ Loads a waveform to the specified channel of the pulsing device.
+        """
+        Loads a waveform to the specified channel of the pulsing device.
 
-        @param dict|list load_dict: a dictionary with keys being one of the available channel
-                                    index and values being the name of the already written
-                                    waveform to load into the channel.
-                                    Examples:   {1: rabi_ch1, 2: rabi_ch2} or
-                                                {1: rabi_ch2, 2: rabi_ch1}
-                                    If just a list of waveform names is given, the channel
-                                    association will be invoked from the channel
-                                    suffix '_ch1', '_ch2' etc.
+        Parameters
+        ----------
+        load_dict : dict or list
+            A dictionary with keys being one of the available channel indexes and
+            values being the name of the already written waveform to load into the
+            channel. Examples:
+            {1: rabi_ch1, 2: rabi_ch2} or
+            {1: rabi_ch2, 2: rabi_ch1}.
 
-                                        {1: rabi_ch1, 2: rabi_ch2}
-                                    or
-                                        {1: rabi_ch2, 2: rabi_ch1}
+            If just a list of waveform names is given, the channel association will
+            be invoked from the channel suffix '_ch1', '_ch2', etc. For example:
 
-                                    If just a list of waveform names is given,
-                                    the channel association will be invoked from
-                                    the channel suffix '_ch1', '_ch2' etc. A
-                                    possible configuration can be e.g.
+            - {1: rabi_ch1, 2: rabi_ch2}
+            - {1: rabi_ch2, 2: rabi_ch1}
 
-                                        ['rabi_ch1', 'rabi_ch2', 'rabi_ch3']
+            If only a list of waveform names is provided, the channel association
+            will be inferred from the channel suffix '_ch1', '_ch2', etc. A
+            possible configuration can be:
 
-        @return dict: Dictionary containing the actually loaded waveforms per
-                      channel.
+            - ['rabi_ch1', 'rabi_ch2', 'rabi_ch3']
 
-        For devices that have a workspace (i.e. AWG) this will load the waveform
-        from the device workspace into the channel. For a device without mass
-        memory, this will make the waveform/pattern that has been previously
-        written with self.write_waveform ready to play.
+        Returns
+        -------
+        dict
+            Dictionary containing the actually loaded waveforms per channel.
 
-        Please note that the channel index used here is not to be confused with the number suffix
-        in the generic channel descriptors (i.e. 'd_ch1', 'a_ch1'). The channel index used here is
-        highly hardware specific and corresponds to a collection of digital and analog channels
-        being associated to a SINGLE wavfeorm asset.
+        Notes
+        -----
+        For devices with a workspace (i.e., AWG), this will load the waveform from
+        the device workspace into the channel. For devices without mass memory, this
+        will make the waveform or pattern previously written with `self.write_waveform`
+        ready to play.
+
+        The channel index used here is not to be confused with the number suffix in
+        the generic channel descriptors (i.e., 'd_ch1', 'a_ch1'). The channel index
+        used here is highly hardware specific and corresponds to a collection of
+        digital and analog channels being associated with a SINGLE waveform asset.
         """
 
-        self.set_seq_mode('ARB')
+        self.set_seq_mode("ARB")
         self._delete_all_sequences()  # leave sequence mode
 
         self.log.debug("Load_waveform call with dict/list {}".format(load_dict))
@@ -263,64 +285,86 @@ class AWGM819X(PulserInterface):
         active_analog = self._get_active_d_or_a_channels(only_analog=True)
 
         # Check if all channels to load to are active
-        channels_to_set = {'a_ch{0:d}'.format(chnl_num) for chnl_num in load_dict}
+        channels_to_set = {"a_ch{0:d}".format(chnl_num) for chnl_num in load_dict}
         if not channels_to_set.issubset(active_analog):
-            self.log.error('Unable to load waveforms into channels.\n'
-                           'One or more channels to set are not active.\n'
-                           'channels_to_set are: ', channels_to_set, 'and\n'
-                           'analog_channels are: ', active_analog)
+            self.log.error(
+                "Unable to load waveforms into channels.\n"
+                "One or more channels to set are not active.\n"
+                "channels_to_set are: ",
+                channels_to_set,
+                "and\n" "analog_channels are: ",
+                active_analog,
+            )
             return self.get_loaded_assets()
 
         # Check if all waveforms to load are present on device memory
         if not set(load_dict.values()).issubset(self.get_waveform_names()):
-            self.log.error('Unable to load waveforms into channels.\n'
-                           'One or more waveforms to load are missing: {}'.format(
-                                                                            set(load_dict.values())
-            ))
+            self.log.error(
+                "Unable to load waveforms into channels.\n"
+                "One or more waveforms to load are missing: {}".format(
+                    set(load_dict.values())
+                )
+            )
             return self.get_loaded_assets()
 
         if load_dict == {}:
-            self.log.warning('No file and channel provided for load!\n'
-                             'Correct that!\nCommand will be ignored.')
+            self.log.warning(
+                "No file and channel provided for load!\n"
+                "Correct that!\nCommand will be ignored."
+            )
             return self.get_loaded_assets()
 
         self._load_wave_from_memory(load_dict, to_nextfree_segment=to_nextfree_segment)
 
-        self.set_trigger_mode('cont')
+        self.set_trigger_mode("cont")
         self.check_dev_error()
 
         return self.get_loaded_assets()
 
     def load_sequence(self, sequence_name):
-        """ Loads a sequence to the channels of the device in order to be ready for playback.
-        For devices that have a workspace (i.e. AWG) this will load the sequence from the device
-        workspace into the channels.
-        For a device without mass memory this will make the waveform/pattern that has been
-        previously written with self.write_waveform ready to play.
+        """
+        Loads a sequence to the channels of the device to prepare for playback.
 
-        @param dict|list sequence_name: a dictionary with keys being one of the available channel
-                                        index and values being the name of the already written
-                                        waveform to load into the channel.
-                                        Examples:   {1: rabi_ch1, 2: rabi_ch2} or
-                                                    {1: rabi_ch2, 2: rabi_ch1}
-                                        If just a list of waveform names if given, the channel
-                                        association will be invoked from the channel
-                                        suffix '_ch1', '_ch2' etc.
+        For devices with a workspace (e.g., AWG), this will load the sequence from
+        the device workspace into the channels. For devices without mass memory,
+        this will prepare the waveform or pattern previously written with
+        `self.write_waveform` for playback.
 
-        @return dict: Dictionary containing the actually loaded waveforms per channel.
+        Parameters
+        ----------
+        sequence_name : dict or list
+            A dictionary with keys as the available channel indexes and values
+            as the names of the already written waveforms to load into the channel.
+            Examples:
+            - {1: rabi_ch1, 2: rabi_ch2}
+            - {1: rabi_ch2, 2: rabi_ch1}
+
+            If only a list of waveform names is given, the channel association will
+            be inferred from the channel suffix '_ch1', '_ch2', etc.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the actually loaded waveforms per channel.
         """
 
-        if not (set(self.get_loaded_assets()[0].values())).issubset(set([sequence_name])):
-            self.log.error('Unable to load sequence into channels.\n'
-                           'Make sure to call write_sequence() first.')
+        if not (set(self.get_loaded_assets()[0].values())).issubset(
+            set([sequence_name])
+        ):
+            self.log.error(
+                "Unable to load sequence into channels.\n"
+                "Make sure to call write_sequence() first."
+            )
             return self.get_loaded_assets()
 
-        self.write_all_ch(':FUNC{}:MODE STS', all_by_one={'m8195a': True})  # activate the sequence mode
+        self.write_all_ch(
+            ":FUNC{}:MODE STS", all_by_one={"m8195a": True}
+        )  # activate the sequence mode
         """
         select the first segment in your sequence, before any dynamic sequence selection.
         """
-        self.write_all_ch(":STAB{}:SEQ:SEL 0", all_by_one={'m8195a': True})
-        self.write_all_ch(":STAB{}:DYN ON", all_by_one={'m8195a': True})
+        self.write_all_ch(":STAB{}:SEQ:SEL 0", all_by_one={"m8195a": True})
+        self.write_all_ch(":STAB{}:DYN ON", all_by_one={"m8195a": True})
 
         return 0
 
@@ -348,37 +392,47 @@ class AWGM819X(PulserInterface):
 
         for chnl_num in channel_numbers:
 
-            asset_name = 'ERROR_NAME'
+            asset_name = "ERROR_NAME"
 
-            if self.get_loaded_assets_num(chnl_num, mode='segment') >= 1 \
-                and self.get_loaded_assets_num(chnl_num, mode='sequence') == 0:
+            if (
+                self.get_loaded_assets_num(chnl_num, mode="segment") >= 1
+                and self.get_loaded_assets_num(chnl_num, mode="sequence") == 0
+            ):
                 # arb mode with at least one waveform
 
-                type_per_ch.append('waveform')
-                seg_id_active = int(self.query(':TRAC{}:SEL?'.format(chnl_num)))
-                ids_avail = self.get_loaded_assets_id(chnl_num, mode='segment')
+                type_per_ch.append("waveform")
+                seg_id_active = int(self.query(":TRAC{}:SEL?".format(chnl_num)))
+                ids_avail = self.get_loaded_assets_id(chnl_num, mode="segment")
                 if seg_id_active not in ids_avail:
                     seg_id_active = ids_avail[0]
-                    self.log.error("Active segment id {} outside available sequences ({}) for unknown reason."
-                                   " Set to segment id to 1.".format(seg_id_active, ids_avail))
+                    self.log.error(
+                        "Active segment id {} outside available sequences ({}) for unknown reason."
+                        " Set to segment id to 1.".format(seg_id_active, ids_avail)
+                    )
 
-                    self.write(':TRAC1:SEL {:d}'.format(seg_id_active))
-                    self.write(':TRAC2:SEL {:d}'.format(seg_id_active))
+                    self.write(":TRAC1:SEL {:d}".format(seg_id_active))
+                    self.write(":TRAC2:SEL {:d}".format(seg_id_active))
 
-                asset_name = self.get_loaded_asset_name_by_id(chnl_num, seg_id_active, mode='segment')
+                asset_name = self.get_loaded_asset_name_by_id(
+                    chnl_num, seg_id_active, mode="segment"
+                )
 
-            elif self.get_loaded_assets_num(chnl_num, mode='segment') >= 1 \
-                and self.get_loaded_assets_num(chnl_num, mode='sequence') == 1:
+            elif (
+                self.get_loaded_assets_num(chnl_num, mode="segment") >= 1
+                and self.get_loaded_assets_num(chnl_num, mode="sequence") == 1
+            ):
                 # seq mode with at least one waveform
                 # currently only a single uploaded sequence supported
-                type_per_ch.append('sequence')
-                asset_name = self.get_loaded_assets_name(chnl_num, mode='sequence')[0]
-            elif self.get_loaded_assets_num(chnl_num, mode='segment') == 0 \
-                and self.get_loaded_assets_num(chnl_num, mode='sequence') == 0:
+                type_per_ch.append("sequence")
+                asset_name = self.get_loaded_assets_name(chnl_num, mode="sequence")[0]
+            elif (
+                self.get_loaded_assets_num(chnl_num, mode="segment") == 0
+                and self.get_loaded_assets_num(chnl_num, mode="sequence") == 0
+            ):
                 # arb mode but no waveform
 
-                type_per_ch.append('waveform')
-                asset_name = ''
+                type_per_ch.append("waveform")
+                asset_name = ""
 
             else:
                 is_err = True
@@ -388,7 +442,7 @@ class AWGM819X(PulserInterface):
 
                 self.log.error("Multiple segments, but no sequence defined")
             """
-            if self.get_loaded_assets_num(chnl_num, mode='sequence') > 1:
+            if self.get_loaded_assets_num(chnl_num, mode="sequence") > 1:
                 self.log.error("Multiple sequences defined. Should only be 1.")
                 # todo: implement more than 1 sequence
 
@@ -398,33 +452,35 @@ class AWGM819X(PulserInterface):
             # make sure type is same for all channels
             is_err = True
         if is_err:
-            self.log.error('Unable to determine loaded assets.')
-            return dict(), ''
+            self.log.error("Unable to determine loaded assets.")
+            return dict(), ""
 
-        return loaded_assets, type_per_ch[0]   # interface requires same type for all ch
+        return loaded_assets, type_per_ch[0]  # interface requires same type for all ch
 
     def clear_all(self):
-        """ Clears all loaded waveforms from the pulse generators RAM/workspace.
+        """Clears all loaded waveforms from the pulse generators RAM/workspace.
 
         @return int: error code (0:OK, -1:error)
         """
 
-        self.write_all_ch(':TRAC{}:DEL:ALL', all_by_one={'m8195a': True})
+        self.write_all_ch(":TRAC{}:DEL:ALL", all_by_one={"m8195a": True})
         self._flag_segment_table_req_update = True
 
         return
 
     def get_status(self):
-        """ Retrieves the status of the pulsing hardware
+        """Retrieves the status of the pulsing hardware
 
         @return (int, dict): tuple with an integer value of the current status and a corresponding
                              dictionary containing status description for all the possible status
                              variables of the pulse generator hardware.
         """
 
-        status_dic = {-1: 'Failed Request or Communication',
-                       0: 'Device has stopped, but can receive commands',
-                       1: 'Device is active and running'}
+        status_dic = {
+            -1: "Failed Request or Communication",
+            0: "Device has stopped, but can receive commands",
+            1: "Device is active and running",
+        }
 
         current_status = -1 if self.awg is None else int(self._is_awg_running())
         # All the other status messages should have higher integer values then 1.
@@ -432,55 +488,80 @@ class AWGM819X(PulserInterface):
         return current_status, status_dic
 
     def get_sample_rate(self):
-        """ Get the sample rate of the pulse generator hardware
+        """Get the sample rate of the pulse generator hardware
 
         @return float: The current sample rate of the device (in Hz)
 
         Do not return a saved sample rate from an attribute, but instead retrieve the current
         sample rate directly from the device.
         """
-        sample_rate = float(self.query(':FREQ:RAST?')) / self._sample_rate_div
+        sample_rate = float(self.query(":FREQ:RAST?")) / self._sample_rate_div
         return sample_rate
 
     def set_sample_rate(self, sample_rate):
-        """ Set the sample rate of the pulse generator hardware.
-
-        @param float sample_rate: The sampling rate to be set (in Hz)
-
-        @return float: the sample rate returned from the device (in Hz).
-
-        Note: After setting the sampling rate of the device, use the actually set return value for
-              further processing.
         """
+        Set the sample rate of the pulse generator hardware.
+
+        Parameters
+        ----------
+        sample_rate : float
+            The sampling rate to be set, in Hz.
+
+        Returns
+        -------
+        float
+            The sample rate returned from the device, in Hz.
+
+        Notes
+        -----
+        After setting the sampling rate of the device, use the actually set
+        return value for further processing.
+        """
+
         sample_rate_GHz = (sample_rate * self._sample_rate_div) / 1e9
-        self.write(':FREQ:RAST {0:.13G}GHz\n'.format(sample_rate_GHz))
-        while int(self.query('*OPC?')) != 1:
+        self.write(":FREQ:RAST {0:.13G}GHz\n".format(sample_rate_GHz))
+        while int(self.query("*OPC?")) != 1:
             time.sleep(0.25)
         time.sleep(0.2)
         return self.get_sample_rate()
 
     def get_analog_level(self, amplitude=None, offset=None):
-        """ Retrieve the analog amplitude and offset of the provided channels.
+        """
+        Retrieve the analog amplitude and offset of the provided channels.
 
-        @param list amplitude: optional, if the amplitude value (in Volt peak to peak, i.e. the
-                               full amplitude) of a specific channel is desired.
-        @param list offset: optional, if the offset value (in Volt) of a specific channel is
-                            desired.
+        Parameters
+        ----------
+        amplitude : list, optional
+            If the amplitude value (in Volt peak-to-peak, i.e., the full amplitude) of
+            a specific channel is desired.
+        offset : list, optional
+            If the offset value (in Volt) of a specific channel is desired.
 
-        @return: (dict, dict): tuple of two dicts, with keys being the channel descriptor string
-                               (i.e. 'a_ch1') and items being the values for those channels.
-                               Amplitude is always denoted in Volt-peak-to-peak and Offset in volts.
+        Returns
+        -------
+        tuple of dict
+            A tuple of two dictionaries:
+            - The first dict contains the amplitude values for the channels, with keys
+              being the channel descriptor string (e.g., 'a_ch1') and values being
+              the amplitude in Volt peak-to-peak.
+            - The second dict contains the offset values for the channels, with keys
+              being the channel descriptor string and values being the offset in Volts.
 
-        Note: Do not return a saved amplitude and/or offset value but instead retrieve the current
-              amplitude and/or offset directly from the device.
+        Notes
+        -----
+        Do not return a saved amplitude and/or offset value but instead retrieve the
+        current amplitude and/or offset directly from the device.
 
-        If nothing (or None) is passed then the levels of all channels will be returned. If no
-        analog channels are present in the device, return just empty dicts.
+        If nothing (or None) is passed, then the levels of all channels will be returned.
+        If no analog channels are present in the device, return empty dictionaries.
 
-        Example of a possible input:
-            amplitude = ['a_ch1', 'a_ch4'], offset = None
-        to obtain the amplitude of channel 1 and 4 and the offset of all channels
-            {'a_ch1': -0.5, 'a_ch4': 2.0} {'a_ch1': 0.0, 'a_ch2': 0.0, 'a_ch3': 1.0, 'a_ch4': 0.0}
+        Examples
+        --------
+        To obtain the amplitude of channels 1 and 4 and the offset of all channels:
+            amplitude = ['a_ch1', 'a_ch4']
+            offset = None
+            Returns:
+            {'a_ch1': -0.5, 'a_ch4': 2.0}, {'a_ch1': 0.0, 'a_ch2': 0.0, 'a_ch3': 1.0, 'a_ch4': 0.0}
         """
 
         amp = dict()
@@ -491,50 +572,68 @@ class AWGM819X(PulserInterface):
         # get pp amplitudes
         if amplitude is None:
             for ch_num, chnl in enumerate(chnl_list, 1):
-                amp[chnl] = float(self.query(':VOLT{0:d}?'.format(ch_num)))
+                amp[chnl] = float(self.query(":VOLT{0:d}?".format(ch_num)))
         else:
             for chnl in amplitude:
                 if chnl in chnl_list:
                     ch_num = self.chstr_2_chnum(chnl)
-                    amp[chnl] = float(self.query(':VOLT{0:d}?'.format(ch_num)))
+                    amp[chnl] = float(self.query(":VOLT{0:d}?".format(ch_num)))
                 else:
-                    self.log.warning('Get analog amplitude from channel "{0}" failed. '
-                                     'Channel non-existent.'.format(chnl))
+                    self.log.warning(
+                        'Get analog amplitude from channel "{0}" failed. '
+                        "Channel non-existent.".format(chnl)
+                    )
 
         # get voltage offsets
         if offset is None:
             for ch_num, chnl in enumerate(chnl_list):
                 ch_num = self.chstr_2_chnum(chnl)
-                off[chnl] = float(self.query(':VOLT{0:d}:OFFS?'.format(ch_num)))
+                off[chnl] = float(self.query(":VOLT{0:d}:OFFS?".format(ch_num)))
         else:
             for chnl in offset:
                 if chnl in chnl_list:
                     ch_num = self.chstr_2_chnum(chnl)
-                    off[chnl] = float(self.query(':VOLT{0:d}:OFFS?'.format(ch_num)))
+                    off[chnl] = float(self.query(":VOLT{0:d}:OFFS?".format(ch_num)))
                 else:
-                    self.log.warning('Get analog offset from channel "{0}" failed. '
-                                     'Channel non-existent.'.format(chnl))
+                    self.log.warning(
+                        'Get analog offset from channel "{0}" failed. '
+                        "Channel non-existent.".format(chnl)
+                    )
         return amp, off
 
     def set_analog_level(self, amplitude=None, offset=None):
-        """ Set amplitude and/or offset value of the provided analog channel(s).
-
-        @param dict amplitude: dictionary, with key being the channel descriptor string
-                               (i.e. 'a_ch1', 'a_ch2') and items being the amplitude values
-                               (in Volt peak to peak, i.e. the full amplitude) for the desired
-                               channel.
-        @param dict offset: dictionary, with key being the channel descriptor string
-                            (i.e. 'a_ch1', 'a_ch2') and items being the offset values
-                            (in absolute volt) for the desired channel.
-
-        @return (dict, dict): tuple of two dicts with the actual set values for amplitude and
-                              offset for ALL channels.
-
-        If nothing is passed then the command will return the current amplitudes/offsets.
-
-        Note: After setting the amplitude and/or offset values of the device, use the actual set
-              return values for further processing.
         """
+        Set amplitude and/or offset value of the provided analog channel(s).
+
+        Parameters
+        ----------
+        amplitude : dict, optional
+            Dictionary with keys being the channel descriptor string (e.g., 'a_ch1', 'a_ch2')
+            and values being the amplitude values (in Volt peak-to-peak, i.e., the full amplitude)
+            for the desired channels.
+        offset : dict, optional
+            Dictionary with keys being the channel descriptor string (e.g., 'a_ch1', 'a_ch2')
+            and values being the offset values (in absolute Volts) for the desired channels.
+
+        Returns
+        -------
+        tuple of dict
+            A tuple of two dictionaries:
+            - The first dict contains the actual set amplitude values for all channels,
+              with keys being the channel descriptor string and values being the amplitude
+              in Volt peak-to-peak.
+            - The second dict contains the actual set offset values for all channels,
+              with keys being the channel descriptor string and values being the offset in Volts.
+
+        Notes
+        -----
+        If no amplitude or offset values are passed, the current amplitudes and offsets
+        for all channels will be returned.
+
+        After setting the amplitude and/or offset values on the device, use the actual
+        set return values for further processing.
+        """
+
         # Check the inputs by using the constraints...
         constraints = self.get_constraints()
         # ...and the available analog channels
@@ -545,77 +644,106 @@ class AWGM819X(PulserInterface):
             for chnl in amplitude:
                 ch_num = self.chstr_2_chnum(chnl)
                 if chnl not in analog_channels:
-                    self.log.warning('Channel to set (a_ch{0}) not available in AWG.\nSetting '
-                                     'analogue voltage for this channel ignored.'.format(ch_num))
+                    self.log.warning(
+                        "Channel to set (a_ch{0}) not available in AWG.\nSetting "
+                        "analogue voltage for this channel ignored.".format(ch_num)
+                    )
                     del amplitude[chnl]
                 if amplitude[chnl] < constraints.a_ch_amplitude.min:
-                    self.log.warning('Minimum Vpp for channel "{0}" is {1}. Requested Vpp of {2}V '
-                                     'was ignored and instead set to min value.'
-                                     ''.format(chnl, constraints.a_ch_amplitude.min,
-                                               amplitude[chnl]))
+                    self.log.warning(
+                        'Minimum Vpp for channel "{0}" is {1}. Requested Vpp of {2}V '
+                        "was ignored and instead set to min value."
+                        "".format(chnl, constraints.a_ch_amplitude.min, amplitude[chnl])
+                    )
                     amplitude[chnl] = constraints.a_ch_amplitude.min
                 elif amplitude[chnl] > constraints.a_ch_amplitude.max:
-                    self.log.warning('Maximum Vpp for channel "{0}" is {1}. Requested Vpp of {2}V '
-                                     'was ignored and instead set to max value.'
-                                     ''.format(chnl, constraints.a_ch_amplitude.max,
-                                               amplitude[chnl]))
+                    self.log.warning(
+                        'Maximum Vpp for channel "{0}" is {1}. Requested Vpp of {2}V '
+                        "was ignored and instead set to max value."
+                        "".format(chnl, constraints.a_ch_amplitude.max, amplitude[chnl])
+                    )
                     amplitude[chnl] = constraints.a_ch_amplitude.max
         # offset sanity check
         if offset is not None:
             for chnl in offset:
                 ch_num = self.chstr_2_chnum(chnl)
                 if chnl not in analog_channels:
-                    self.log.warning('Channel to set (a_ch{0}) not available in AWG.\nSetting '
-                                     'offset voltage for this channel ignored.'.format(chnl))
+                    self.log.warning(
+                        "Channel to set (a_ch{0}) not available in AWG.\nSetting "
+                        "offset voltage for this channel ignored.".format(chnl)
+                    )
                     del offset[chnl]
                 if offset[chnl] < constraints.a_ch_offset.min:
-                    self.log.warning('Minimum offset for channel "{0}" is {1}. Requested offset of '
-                                     '{2}V was ignored and instead set to min value.'
-                                     ''.format(chnl, constraints.a_ch_offset.min, offset[chnl]))
+                    self.log.warning(
+                        'Minimum offset for channel "{0}" is {1}. Requested offset of '
+                        "{2}V was ignored and instead set to min value."
+                        "".format(chnl, constraints.a_ch_offset.min, offset[chnl])
+                    )
                     offset[chnl] = constraints.a_ch_offset.min
                 elif offset[chnl] > constraints.a_ch_offset.max:
-                    self.log.warning('Maximum offset for channel "{0}" is {1}. Requested offset of '
-                                     '{2}V was ignored and instead set to max value.'
-                                     ''.format(chnl, constraints.a_ch_offset.max,
-                                               offset[chnl]))
+                    self.log.warning(
+                        'Maximum offset for channel "{0}" is {1}. Requested offset of '
+                        "{2}V was ignored and instead set to max value."
+                        "".format(chnl, constraints.a_ch_offset.max, offset[chnl])
+                    )
                     offset[chnl] = constraints.a_ch_offset.max
 
         if amplitude is not None:
             for chnl, amp in amplitude.items():
                 ch_num = self.chstr_2_chnum(chnl)
-                self.write(':VOLT{0} {1:.4f}'.format(ch_num, amp))
-                while int(self.query('*OPC?')) != 1:
+                self.write(":VOLT{0} {1:.4f}".format(ch_num, amp))
+                while int(self.query("*OPC?")) != 1:
                     time.sleep(0.25)
 
         if offset is not None:
             for chnl, off in offset.items():
                 ch_num = self.chstr_2_chnum(chnl)
-                self.write(':VOLT{0}:OFFS {1:.4f}'.format(ch_num, off))
-                while int(self.query('*OPC?')) != 1:
+                self.write(":VOLT{0}:OFFS {1:.4f}".format(ch_num, off))
+                while int(self.query("*OPC?")) != 1:
                     time.sleep(0.25)
         return self.get_analog_level()
 
     def get_digital_level(self, low=None, high=None):
-        """ Retrieve the digital low and high level of the provided/all channels.
+        """
+        Retrieve the digital low and high level of the provided/all channels.
 
-        @param list low: optional, if the low value (in Volt) of a specific channel is desired.
-        @param list high: optional, if the high value (in Volt) of a specific channel is desired.
+        Parameters
+        ----------
+        low : list, optional
+            List of channel descriptor strings (e.g., ['d_ch1', 'd_ch4']) for which the low voltage
+            values (in Volts) are desired. If None, the low values of all channels are returned.
+        high : list, optional
+            List of channel descriptor strings (e.g., ['d_ch1', 'd_ch4']) for which the high voltage
+            values (in Volts) are desired. If None, the high values of all channels are returned.
 
-        @return: (dict, dict): tuple of two dicts, with keys being the channel descriptor strings
-                               (i.e. 'd_ch1', 'd_ch2') and items being the values for those
-                               channels. Both low and high value of a channel is denoted in volts.
+        Returns
+        -------
+        tuple of dict
+            A tuple of two dictionaries:
+            - The first dict contains the low voltage values for the requested channels,
+              with keys being the channel descriptor string (e.g., 'd_ch1') and values
+              being the low voltage in Volts.
+            - The second dict contains the high voltage values for the requested channels,
+              with keys being the channel descriptor string and values being the high
+              voltage in Volts.
 
-        Note: Do not return a saved low and/or high value but instead retrieve
-              the current low and/or high value directly from the device.
+        Notes
+        -----
+        The method retrieves the current low and/or high values directly from the device,
+        rather than returning any saved values.
 
-        If nothing (or None) is passed then the levels of all channels are being returned.
-        If no digital channels are present, return just an empty dict.
+        If no specific low or high values are requested, the method will return the low
+        and high values for all channels. If no digital channels are present, the method
+        returns empty dictionaries.
 
-        Example of a possible input:
-            low = ['d_ch1', 'd_ch4']
-        to obtain the low voltage values of digital channel 1 an 4. A possible answer might be
-            {'d_ch1': -0.5, 'd_ch4': 2.0} {'d_ch1': 1.0, 'd_ch2': 1.0, 'd_ch3': 1.0, 'd_ch4': 4.0}
-        Since no high request was performed, the high values for ALL channels are returned (here 4).
+        Examples
+        --------
+        Retrieve the low voltage values of digital channels 1 and 4:
+        >>> low = ['d_ch1', 'd_ch4']
+        >>> high = None
+        >>> result = retrieve_digital_levels(low=low)
+        >>> print(result)
+        ({'d_ch1': -0.5, 'd_ch4': 2.0}, {'d_ch1': 1.0, 'd_ch2': 1.0, 'd_ch3': 1.0, 'd_ch4': 4.0})
         """
 
         low_val = {}
@@ -632,82 +760,121 @@ class AWGM819X(PulserInterface):
         for chnl in low:
             if chnl not in digital_channels:
                 continue
-            low_val[chnl] = float(
-                self.query(self._get_digital_ch_cmd(chnl) + ':LOW?'))
+            low_val[chnl] = float(self.query(self._get_digital_ch_cmd(chnl) + ":LOW?"))
         # get high marker levels
         for chnl in high:
             if chnl not in digital_channels:
                 continue
             high_val[chnl] = float(
-                self.query(self._get_digital_ch_cmd(chnl) + ':HIGH?'))
+                self.query(self._get_digital_ch_cmd(chnl) + ":HIGH?")
+            )
 
         return low_val, high_val
 
     def set_digital_level(self, low=None, high=None):
-        """ Set low and/or high value of the provided digital channel.
-
-        @param dict low: dictionary, with key being the channel descriptor string
-                         (i.e. 'd_ch1', 'd_ch2') and items being the low values (in volt) for the
-                         desired channel.
-        @param dict high: dictionary, with key being the channel descriptor string
-                          (i.e. 'd_ch1', 'd_ch2') and items being the high values (in volt) for the
-                          desired channel.
-
-        @return (dict, dict): tuple of two dicts where first dict denotes the current low value and
-                              the second dict the high value for ALL digital channels.
-                              Keys are the channel descriptor strings (i.e. 'd_ch1', 'd_ch2')
-
-        If nothing is passed then the command will return the current voltage levels.
-
-        Note: After setting the high and/or low values of the device, use the actual set return
-              values for further processing.
         """
+        Set low and/or high value of the provided digital channel.
+
+        Parameters
+        ----------
+        low : dict, optional
+            Dictionary with keys being the channel descriptor strings (e.g., 'd_ch1', 'd_ch2')
+            and items being the low values (in Volts) for the desired channels.
+        high : dict, optional
+            Dictionary with keys being the channel descriptor strings (e.g., 'd_ch1', 'd_ch2')
+            and items being the high values (in Volts) for the desired channels.
+
+        Returns
+        -------
+        tuple of dict
+            A tuple of two dictionaries:
+            - The first dict contains the current low values for all digital channels,
+              with keys being the channel descriptor string (e.g., 'd_ch1') and values
+              being the low voltage values in Volts.
+            - The second dict contains the current high values for all digital channels,
+              with keys being the channel descriptor string (e.g., 'd_ch1') and values
+              being the high voltage values in Volts.
+
+        Notes
+        -----
+        If no arguments (low or high) are passed, the method returns the current voltage levels
+        for all digital channels.
+
+        After setting the low and/or high values of the device, use the returned values for further
+        processing as they reflect the actual set values.
+
+        Examples
+        --------
+        Set the low and high voltage values for digital channels 'd_ch1' and 'd_ch2':
+        >>> low = {'d_ch1': -1.0, 'd_ch2': -0.5}
+        >>> high = {'d_ch1': 3.5, 'd_ch2': 4.0}
+        >>> result = set_digital_levels(low=low, high=high)
+        >>> print(result)
+        ({'d_ch1': -1.0, 'd_ch2': -0.5}, {'d_ch1': 3.5, 'd_ch2': 4.0})
+
+        Retrieve the current voltage levels:
+        >>> result = set_digital_levels()
+        >>> print(result)
+        ({'d_ch1': -1.0, 'd_ch2': -0.5}, {'d_ch1': 3.5, 'd_ch2': 4.0})
+        """
+
         if low is None:
             low = self.get_digital_level()[0]
         if high is None:
             high = self.get_digital_level()[1]
 
-        #If you want to check the input use the constraints:
+        # If you want to check the input use the constraints:
         constraints = self.get_constraints()
         digital_channels = self._get_all_digital_channels()
 
         # Check the constraints for marker high level
         for key in high:
             if high[key] < constraints.d_ch_high.min:
-                self.log.warning('Voltages for digital values are too small for high. Setting to minimum value')
+                self.log.warning(
+                    "Voltages for digital values are too small for high. Setting to minimum value"
+                )
                 high[key] = constraints.d_ch_high.min
             elif high[key] > constraints.d_ch_high.max:
-                self.log.warning('Voltages for digital values are too high for high. Setting to maximum value')
+                self.log.warning(
+                    "Voltages for digital values are too high for high. Setting to maximum value"
+                )
                 high[key] = constraints.d_ch_high.max
 
         # Check the constraints for marker low level
         for key in low:
             if low[key] < constraints.d_ch_low.min:
-                self.log.warning('Voltages for digital values are too small for low. Setting to minimum value')
+                self.log.warning(
+                    "Voltages for digital values are too small for low. Setting to minimum value"
+                )
                 low[key] = constraints.d_ch_low.min
             elif low[key] > constraints.d_ch_low.max:
-                self.log.warning('Voltages for digital values are too high for low. Setting to maximum value')
+                self.log.warning(
+                    "Voltages for digital values are too high for low. Setting to maximum value"
+                )
                 low[key] = constraints.d_ch_low.max
 
         # Check the difference between marker high and low
         for key in high:
             if high[key] - low[key] < 0.125:
-                self.log.warning('Voltage difference is too small. Reducing low voltage level.')
+                self.log.warning(
+                    "Voltage difference is too small. Reducing low voltage level."
+                )
                 low[key] = high[key] - 0.125
             elif high[key] - low[key] > 2.25:
-                self.log.warning('Voltage difference is too large. Increasing low voltage level.')
+                self.log.warning(
+                    "Voltage difference is too large. Increasing low voltage level."
+                )
                 low[key] = high[key] - 2.25
-
 
         # set high marker levels
         for chnl in low and high:
             if chnl not in digital_channels:
                 continue
 
-            offs =(high[chnl] + low[chnl])/2
+            offs = (high[chnl] + low[chnl]) / 2
             ampl = high[chnl] - low[chnl]
-            self.write(self._get_digital_ch_cmd(chnl) + ':AMPL {}'.format(ampl))
-            self.write(self._get_digital_ch_cmd(chnl) + ':OFFS {}'.format(offs))
+            self.write(self._get_digital_ch_cmd(chnl) + ":AMPL {}".format(ampl))
+            self.write(self._get_digital_ch_cmd(chnl) + ":OFFS {}".format(offs))
 
         return self.get_digital_level()
 
@@ -718,39 +885,59 @@ class AWGM819X(PulserInterface):
     def set_active_channels(self, ch=None):
         """
         Set the active/inactive channels for the pulse generator hardware.
-        The state of ALL available analog and digital channels will be returned
-        (True: active, False: inactive).
-        The actually set and returned channel activation must be part of the available
-        activation_configs in the constraints.
-        You can also activate/deactivate subsets of available channels but the resulting
-        activation_config must still be valid according to the constraints.
-        If the resulting set of active channels can not be found in the available
-        activation_configs, the channel states must remain unchanged.
 
-        @param dict ch: dictionary with keys being the analog or digital string generic names for
-                        the channels (i.e. 'd_ch1', 'a_ch2') with items being a boolean value.
-                        True: Activate channel, False: Deactivate channel
+        This method allows activating or deactivating subsets of available analog and digital channels.
+        The state of all available channels will be returned (True: active, False: inactive). The channel
+        activation set and returned must be part of the available activation configurations defined in the
+        device constraints. If the resulting set of active channels does not match any valid configuration,
+        the channel states will remain unchanged.
 
-        @return dict: with the actual set values for ALL active analog and digital channels
+        Parameters
+        ----------
+        ch : dict, optional
+            A dictionary where the keys are channel descriptor strings (e.g., 'd_ch1', 'a_ch2')
+            representing analog and digital channels, and the values are booleans indicating the
+            desired state of the channels (True to activate, False to deactivate).
+            If not provided, the current channel state will be returned without any changes.
 
-        If nothing is passed then the command will simply return the unchanged current state.
+        Returns
+        -------
+        dict
+            A dictionary containing the actual set values for all active analog and digital channels,
+            with keys being the channel descriptor strings (e.g., 'd_ch1', 'a_ch2') and values being
+            booleans (True for active, False for inactive).
 
-        Note: After setting the active channels of the device, use the returned dict for further
-              processing.
+        Notes
+        -----
+        The activation configuration provided must adhere to the constraints of the device. If the requested
+        configuration is invalid, the current state of the channels will remain unchanged.
 
-        Example for possible input:
-            ch={'a_ch2': True, 'd_ch1': False, 'd_ch3': True, 'd_ch4': True}
-        to activate analog channel 2 digital channel 3 and 4 and to deactivate
-        digital channel 1. All other available channels will remain unchanged.
+        Use the returned dictionary to proceed with further processing after setting the active channels.
+
+        Examples
+        --------
+        To activate analog channel 2 and digital channels 3 and 4, while deactivating digital channel 1:
+        >>> ch = {'a_ch2': True, 'd_ch1': False, 'd_ch3': True, 'd_ch4': True}
+        >>> result = set_active_channels(ch=ch)
+        >>> print(result)
+        {'a_ch1': False, 'a_ch2': True, 'd_ch1': False, 'd_ch2': False, 'd_ch3': True, 'd_ch4': True}
+
+        To retrieve the current state of the channels without modifying them:
+        >>> result = set_active_channels()
+        >>> print(result)
+        {'a_ch1': False, 'a_ch2': False, 'd_ch1': True, 'd_ch2': True, 'd_ch3': False, 'd_ch4': False}
         """
+
         current_channel_state = self.get_active_channels()
 
         if ch is None:
             return current_channel_state
 
         if not set(current_channel_state).issuperset(ch):
-            self.log.error('Trying to (de)activate channels that are not present in M8190A.\n'
-                           'Setting of channel activation aborted.')
+            self.log.error(
+                "Trying to (de)activate channels that are not present in M8190A.\n"
+                "Setting of channel activation aborted."
+            )
             return current_channel_state
 
         # Determine new channel activation states
@@ -760,75 +947,129 @@ class AWGM819X(PulserInterface):
 
         # check if the channels to set are part of the activation_config constraints
         constraints = self.get_constraints()
-        new_active_channels = {chnl for chnl in new_channels_state if new_channels_state[chnl]}
+        new_active_channels = {
+            chnl for chnl in new_channels_state if new_channels_state[chnl]
+        }
         if new_active_channels not in constraints.activation_config.values():
-            self.log.error('activation_config to set ({0}) is not allowed according to constraints.'
-                           ''.format(new_active_channels))
+            self.log.error(
+                "activation_config to set ({0}) is not allowed according to constraints."
+                "".format(new_active_channels)
+            )
             return current_channel_state
 
         self._set_active_ch(new_channels_state)
 
         return self.get_active_channels()
 
-    def write_waveform(self, name, analog_samples, digital_samples, is_first_chunk, is_last_chunk,
-                       total_number_of_samples):
+    def write_waveform(
+        self,
+        name,
+        analog_samples,
+        digital_samples,
+        is_first_chunk,
+        is_last_chunk,
+        total_number_of_samples,
+    ):
         """
-        Write a new waveform or append samples to an already existing waveform on the device memory.
-        The flags is_first_chunk and is_last_chunk can be used as indicator if a new waveform should
-        be created or if the write process to a waveform should be terminated.
+        Write a new waveform or append samples to an existing waveform on the device memory.
 
-        NOTE: All sample arrays in analog_samples and digital_samples must be of equal length!
+        This method either creates a new waveform or appends additional samples to an existing one.
+        The `is_first_chunk` and `is_last_chunk` flags can be used to indicate the start or end of
+        the writing process for the waveform.
 
-        @param str name: the name of the waveform to be created/append to
-        @param dict analog_samples: keys are the generic analog channel names (i.e. 'a_ch1') and
-                                    values are 1D numpy arrays of type float32 containing the
-                                    voltage samples normalized to half Vpp (between -1 and 1).
-        @param dict digital_samples: keys are the generic digital channel names (i.e. 'd_ch1') and
-                                     values are 1D numpy arrays of type bool containing the marker
-                                     states.
-        @param bool is_first_chunk: Flag indicating if it is the first chunk to write.
-                                    If True this method will create a new empty wavveform.
-                                    If False the samples are appended to the existing waveform.
-        @param bool is_last_chunk:  Flag indicating if it is the last chunk to write.
-                                    Some devices may need to know when to close the appending wfm.
-        @param int total_number_of_samples: The number of sample points for the entire waveform
-                                            (not only the currently written chunk)
+        **Note**: All sample arrays in `analog_samples` and `digital_samples` must be of equal length!
 
-        @return (int, list): Number of samples written (-1 indicates failed process) and list of
-                             created waveform names
+        Parameters
+        ----------
+        name : str
+            The name of the waveform to be created or appended to.
+        analog_samples : dict
+            A dictionary where the keys are the generic analog channel names (e.g., 'a_ch1') and the
+            values are 1D numpy arrays of type float32. These arrays contain the voltage samples normalized
+            to half of the peak-to-peak voltage (between -1 and 1).
+        digital_samples : dict
+            A dictionary where the keys are the generic digital channel names (e.g., 'd_ch1') and the
+            values are 1D numpy arrays of type bool containing the marker states.
+        is_first_chunk : bool
+            A flag indicating whether this is the first chunk to write. If `True`, a new empty waveform
+            will be created. If `False`, the samples will be appended to an existing waveform.
+        is_last_chunk : bool
+            A flag indicating whether this is the last chunk to write. Some devices may require this
+            information to close the waveform after appending.
+        total_number_of_samples : int
+            The total number of sample points for the entire waveform (not just the current chunk being written).
+
+        Returns
+        -------
+        int
+            The number of samples written. Returns -1 if the process failed.
+        list
+            A list of the names of created waveforms.
+
+        Examples
+        --------
+        Writing the first chunk of a new waveform:
+        >>> analog_data = {'a_ch1': np.array([0.5, -0.5, 0.5], dtype=np.float32)}
+        >>> digital_data = {'d_ch1': np.array([True, False, True], dtype=bool)}
+        >>> num_samples = 3
+        >>> result = write_waveform('my_waveform', analog_data, digital_data, is_first_chunk=True, is_last_chunk=False, total_number_of_samples=num_samples)
+        >>> print(result)
+        (3, ['my_waveform'])
+
+        Appending to an existing waveform and finishing the write:
+        >>> analog_data = {'a_ch1': np.array([0.1, 0.2, 0.3], dtype=np.float32)}
+        >>> digital_data = {'d_ch1': np.array([False, True, False], dtype=bool)}
+        >>> result = write_waveform('my_waveform', analog_data, digital_data, is_first_chunk=False, is_last_chunk=True, total_number_of_samples=num_samples)
+        >>> print(result)
+        (3, ['my_waveform'])
         """
 
         waveforms = []
 
         # Sanity checks
         if len(analog_samples) == 0:
-            self.log.error('No analog samples passed to write_waveform method in M8190A.')
+            self.log.error(
+                "No analog samples passed to write_waveform method in M8190A."
+            )
             return -1, waveforms
 
         min_samples = self.get_constraints().waveform_length.min
         if total_number_of_samples < min_samples:
-            self.log.error('Unable to write waveform.\nNumber of samples to write ({0:d}) is '
-                           'smaller than the allowed minimum waveform length ({1:d}).'
-                           ''.format(total_number_of_samples, min_samples))
+            self.log.error(
+                "Unable to write waveform.\nNumber of samples to write ({0:d}) is "
+                "smaller than the allowed minimum waveform length ({1:d})."
+                "".format(total_number_of_samples, min_samples)
+            )
             return -1, waveforms
 
         active_analog = self._get_active_d_or_a_channels(only_analog=True)
         active_channels = set(self.get_active_channels().keys())
 
         # Sanity check of channel numbers
-        if active_channels != set(analog_samples.keys()).union(set(digital_samples.keys())):
-            self.log.error('Mismatch of channel activation and sample array dimensions for '
-                           'waveform creation.\nChannel activation is: {0}\nSample arrays have: '
-                           ''.format(active_channels,
-                                     set(analog_samples.keys()).union(set(digital_samples.keys()))))
+        if active_channels != set(analog_samples.keys()).union(
+            set(digital_samples.keys())
+        ):
+            self.log.error(
+                "Mismatch of channel activation and sample array dimensions for "
+                "waveform creation.\nChannel activation is: {0}\nSample arrays have: "
+                "".format(
+                    active_channels,
+                    set(analog_samples.keys()).union(set(digital_samples.keys())),
+                )
+            )
             return -1, waveforms
 
         to_segment_id = 1  # pc_hdd mode
-        if self._wave_mem_mode == 'awg_segments':
+        if self._wave_mem_mode == "awg_segments":
             to_segment_id = -1
 
-        waveforms = self._write_wave_to_memory(name, analog_samples, digital_samples, active_analog,
-                                               to_segment_id=to_segment_id)
+        waveforms = self._write_wave_to_memory(
+            name,
+            analog_samples,
+            digital_samples,
+            active_analog,
+            to_segment_id=to_segment_id,
+        )
 
         self.check_dev_error()
 
@@ -837,41 +1078,62 @@ class AWGM819X(PulserInterface):
     def write_sequence(self, name, sequence_parameters):
         """
         Write a new sequence on the device memory.
-        In wave_mem_mode == 'pc_hdd' and if elements in the sequence are not available on the AWG yet, they will be
-        transferred from the PC.
 
-        @param str name: the name of the waveform to be created/append to
-        @param list sequence_parameters: List containing tuples of length 2. Each tuple represents
-                                         a sequence step. The first entry of the tuple is a list of
-                                         waveform names (str); one for each channel. The second
-                                         tuple element is a SequenceStep instance containing the
-                                         sequencing parameters for this step.
+        This method writes a new sequence to the device memory. If `wave_mem_mode == 'pc_hdd'` and some elements
+        in the sequence are not available on the AWG yet, they will be transferred from the PC to the device.
 
-        @return: int, number of sequence steps written (-1 indicates failed process)
+        Parameters
+        ----------
+        name : str
+            The name of the waveform to be created or appended to.
+        sequence_parameters : list
+            A list containing tuples of length 2. Each tuple represents a sequence step. The first element of the tuple
+            is a list of waveform names (str), one for each channel. The second element of the tuple is a `SequenceStep`
+            instance, which contains the sequencing parameters for this step.
+
+        Returns
+        -------
+        int
+            The number of sequence steps written. Returns -1 if the process failed.
+
+        Examples
+        --------
+        Creating and writing a new sequence:
+        >>> sequence_steps = [(['waveform_ch1', 'waveform_ch2'], SequenceStep(trigger=True)),
+        ...                   (['waveform_ch1', 'waveform_ch2'], SequenceStep(trigger=False))]
+        >>> result = write_sequence('my_sequence', sequence_steps)
+        >>> print(result)
+        2  # Number of sequence steps written
         """
 
         # Check if device has sequencer option installed
         if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. Sequencer option not '
-                           'installed.')
+            self.log.error(
+                "Direct sequence generation in AWG not possible. Sequencer option not "
+                "installed."
+            )
             return -1
 
         # Check if all waveforms are present on device memory
         avail_waveforms = set(self.get_waveform_names())
         for waveform_tuple, param_dict in sequence_parameters:
             if not avail_waveforms.issuperset(waveform_tuple):
-                self.log.error('Failed to create sequence "{0}" due to waveforms "{1}" not '
-                               'present in memory. Try to load them again.'.format(name, waveform_tuple))
+                self.log.error(
+                    'Failed to create sequence "{0}" due to waveforms "{1}" not '
+                    "present in memory. Try to load them again.".format(
+                        name, waveform_tuple
+                    )
+                )
                 return -1
 
         num_steps = len(sequence_parameters)
 
-        if self._wave_mem_mode == 'pc_hdd':
+        if self._wave_mem_mode == "pc_hdd":
             # todo: check whether skips on already loaded waveforms that should be updated
             # check whether this works as intended with <generate_new> mechanism
             # generate new needs to invalidate loaded assets
-            loaded_segments_ch1 = self.get_loaded_assets_name(1, mode='segment')
-            loaded_segments_ch2 = self.get_loaded_assets_name(2, mode='segment')
+            loaded_segments_ch1 = self.get_loaded_assets_name(1, mode="segment")
+            loaded_segments_ch2 = self.get_loaded_assets_name(2, mode="segment")
 
             waves_loaded_here = []
             # transfer waveforms in sequence from local pc to segments in awg mem
@@ -883,22 +1145,29 @@ class AWGM819X(PulserInterface):
                 wave_ch1 = self._remove_file_extension(waveform_tuple[0])
                 wave_ch2 = self._remove_file_extension(waveform_tuple[1])
 
-                if not (wave_ch1 in loaded_segments_ch1 and
-                        wave_ch2 in loaded_segments_ch2) \
-                        and not (wave_ch1 in waves_loaded_here and
-                        wave_ch2 in waves_loaded_here):
+                if not (
+                    wave_ch1 in loaded_segments_ch1 and wave_ch2 in loaded_segments_ch2
+                ) and not (
+                    wave_ch1 in waves_loaded_here and wave_ch2 in waves_loaded_here
+                ):
 
-                    self.log.debug("Couldn't find segments {} and {} on device for writing sequence {}. Loading...".format(
-                        wave_ch1, wave_ch2, name))
+                    self.log.debug(
+                        "Couldn't find segments {} and {} on device for writing sequence {}. Loading...".format(
+                            wave_ch1, wave_ch2, name
+                        )
+                    )
                     self.load_waveform(waveform_list, to_nextfree_segment=True)
                     waves_loaded_here.append(wave_ch1)
                     waves_loaded_here.append(wave_ch2)
                 else:
-                    self.log.debug("Segments {} and {} already on device for writing sequence {}. Skipping load.".format(
-                        wave_ch1, wave_ch2, name))
+                    self.log.debug(
+                        "Segments {} and {} already on device for writing sequence {}. Skipping load.".format(
+                            wave_ch1, wave_ch2, name
+                        )
+                    )
 
             self.log.debug("Loading of waveforms for sequence write finished.")
-        elif self._wave_mem_mode == 'awg_segments':
+        elif self._wave_mem_mode == "awg_segments":
             # all segments must be present on device mem already
             pass
         else:
@@ -909,8 +1178,12 @@ class AWGM819X(PulserInterface):
         and all advancement modes must be set to Auto. 
         Additionally, the trigger mode Gated is not allowed.
         """
-        self.write_all_ch(':FUNC{}:MODE STS', all_by_one={'m8195a': True})  # activate the sequence mode
-        self.write_all_ch(':STAB{}:RES', all_by_one={'m8195a': True})       # Reset all sequence table entries to default values
+        self.write_all_ch(
+            ":FUNC{}:MODE STS", all_by_one={"m8195a": True}
+        )  # activate the sequence mode
+        self.write_all_ch(
+            ":STAB{}:RES", all_by_one={"m8195a": True}
+        )  # Reset all sequence table entries to default values
 
         self._delete_all_sequences()
         self._define_new_sequence(name, num_steps)
@@ -922,7 +1195,7 @@ class AWGM819X(PulserInterface):
 
             index = step - 1
 
-            if seq_step['go_to'] != -1:
+            if seq_step["go_to"] != -1:
                 goto_in_sequence = True
 
             control = self._get_sequence_control_bin(sequence_parameters, index)
@@ -932,76 +1205,109 @@ class AWGM819X(PulserInterface):
                 # this is ugly, limits maximal waiting time. 1 Sa -> approx. 0.3 s
                 seg_loop_count = 4294967295  # max value, todo: from constraints
             else:
-                seg_loop_count = seq_step.repetitions + 1  # if repetitions = 0 then do it once
-            seg_start_offset = 0    # play whole segement from start...
-            seg_end_offset = 0xFFFFFFFF     # to end
+                seg_loop_count = (
+                    seq_step.repetitions + 1
+                )  # if repetitions = 0 then do it once
+            seg_start_offset = 0  # play whole segement from start...
+            seg_end_offset = 0xFFFFFFFF  # to end
 
-            self.log.debug("For sequence table step {} with {} reps: control: {}".format(step,
-                                                                                         seq_loop_count,
-                                                                                         control))
+            self.log.debug(
+                "For sequence table step {} with {} reps: control: {}".format(
+                    step, seq_loop_count, control
+                )
+            )
 
-            segment_id_ch1 = self.get_segment_id(self._remove_file_extension(wfm_tuple[0]), 1) \
-                if len(wfm_tuple) >= 1 else -1
-            segment_id_ch2 = self.get_segment_id(self._remove_file_extension(wfm_tuple[1]), 2) \
-                if len(wfm_tuple) == 2 else -1
+            segment_id_ch1 = (
+                self.get_segment_id(self._remove_file_extension(wfm_tuple[0]), 1)
+                if len(wfm_tuple) >= 1
+                else -1
+            )
+            segment_id_ch2 = (
+                self.get_segment_id(self._remove_file_extension(wfm_tuple[1]), 2)
+                if len(wfm_tuple) == 2
+                else -1
+            )
 
             try:
                 # creates all segments as data entries
                 if segment_id_ch1 > -1:
                     # STAB will default to STAB1 on 8190A
-                    self.write(':STAB:DATA {0}, {1}, {2}, {3}, {4}, {5}, {6}'
-                               .format(index,
-                                       control,
-                                       seq_loop_count,
-                                       seg_loop_count,
-                                       segment_id_ch1,
-                                       seg_start_offset,
-                                       seg_end_offset))
+                    self.write(
+                        ":STAB:DATA {0}, {1}, {2}, {3}, {4}, {5}, {6}".format(
+                            index,
+                            control,
+                            seq_loop_count,
+                            seg_loop_count,
+                            segment_id_ch1,
+                            seg_start_offset,
+                            seg_end_offset,
+                        )
+                    )
                 if segment_id_ch2 > -1:
-                    self.write(':STAB2:DATA {0}, {1}, {2}, {3}, {4}, {5}, {6}'
-                               .format(index,
-                                       control,
-                                       seq_loop_count,
-                                       seg_loop_count,
-                                       segment_id_ch2,
-                                       seg_start_offset,
-                                       seg_end_offset))
+                    self.write(
+                        ":STAB2:DATA {0}, {1}, {2}, {3}, {4}, {5}, {6}".format(
+                            index,
+                            control,
+                            seq_loop_count,
+                            seg_loop_count,
+                            segment_id_ch2,
+                            seg_start_offset,
+                            seg_end_offset,
+                        )
+                    )
 
                 if segment_id_ch1 + segment_id_ch2 > -1:
                     ctr_steps_written += 1
                     self.log.debug("Writing seqtable entry {}: {}".format(index, step))
                 else:
-                    self.log.error("Failed while writing seqtable entry {}: {}".format(index, step))
+                    self.log.error(
+                        "Failed while writing seqtable entry {}: {}".format(index, step)
+                    )
 
             except Exception as e:
-                self.log.error("Unknown error occured while writing to seq table: {}".format(str(e)))
+                self.log.error(
+                    "Unknown error occured while writing to seq table: {}".format(
+                        str(e)
+                    )
+                )
 
-        if goto_in_sequence and self.get_constraints().sequence_order == "LINONLY": # SequenceOrderOption.LINONLY:
-            self.log.warning("Found go_to in step of sequence {}. Not supported and ignored.".format(name))
+        if (
+            goto_in_sequence and self.get_constraints().sequence_order == "LINONLY"
+        ):  # SequenceOrderOption.LINONLY:
+            self.log.warning(
+                "Found go_to in step of sequence {}. Not supported and ignored.".format(
+                    name
+                )
+            )
 
-        while int(self.query('*OPC?')) != 1:
+        while int(self.query("*OPC?")) != 1:
             time.sleep(0.25)
 
         return int(ctr_steps_written)
 
     def get_waveform_names(self):
-        """ Retrieve the names of all uploaded waveforms on the device.
+        """Retrieve the names of all uploaded waveforms on the device.
 
         @return list: List of all uploaded waveform name strings in the device workspace.
         """
 
         names = []
 
-        if self._wave_mem_mode == 'pc_hdd':
-            names = self.query('MMEM:CAT?').replace('"', '').replace("'", "").split(",")[2::3]
-        elif self._wave_mem_mode == 'awg_segments':
+        if self._wave_mem_mode == "pc_hdd":
+            names = (
+                self.query("MMEM:CAT?")
+                .replace('"', "")
+                .replace("'", "")
+                .split(",")[2::3]
+            )
+        elif self._wave_mem_mode == "awg_segments":
 
             active_analog = self._get_active_d_or_a_channels(only_analog=True)
             channel_numbers = self.chstr_2_chnum(active_analog, return_list=True)
 
             for chnl_num in channel_numbers:
-                names.extend(self.get_loaded_assets_name(chnl_num, 'segment'))
-            names = list(set(names)) # make unique
+                names.extend(self.get_loaded_assets_name(chnl_num, "segment"))
+            names = list(set(names))  # make unique
 
         else:
             raise ValueError("Unknown memory mode: {}".format(self._wave_mem_mode))
@@ -1009,7 +1315,7 @@ class AWGM819X(PulserInterface):
         return names
 
     def get_sequence_names(self):
-        """ Retrieve the names of all uploaded sequence on the device.
+        """Retrieve the names of all uploaded sequence on the device.
 
         @return list: List of all uploaded sequence name strings in the device workspace.
         """
@@ -1018,47 +1324,73 @@ class AWGM819X(PulserInterface):
         if not self.has_sequence_mode():
             return sequence_list
 
-        if self._wave_mem_mode == 'pc_hdd':
+        if self._wave_mem_mode == "pc_hdd":
             # get only the files from the dir and skip possible directories
             log = os.listdir(self._assets_storage_path)
             file_list = [line for line in log if not os.path.isdir(line)]
 
             for filename in file_list:
-                if filename.endswith(('.seq', '.seqx', '.sequence')):
+                if filename.endswith((".seq", ".seqx", ".sequence")):
                     if filename not in sequence_list:
                         sequence_list.append(self._remove_file_extension(filename))
-        elif self._wave_mem_mode == 'awg_segments':
-            seqs_ch1 = self.get_loaded_assets_name(1, 'sequence')
-            seqs_ch2 = self.get_loaded_assets_name(2, 'sequence')
+        elif self._wave_mem_mode == "awg_segments":
+            seqs_ch1 = self.get_loaded_assets_name(1, "sequence")
+            seqs_ch2 = self.get_loaded_assets_name(2, "sequence")
 
             if seqs_ch1 != seqs_ch2:
-                self.log.error("Sequence tables for ch1/2 seem unaligned! ch1: {} ch2: {}".format(seqs_ch1,
-                                                                                                  seqs_ch2))
+                self.log.error(
+                    "Sequence tables for ch1/2 seem unaligned! ch1: {} ch2: {}".format(
+                        seqs_ch1, seqs_ch2
+                    )
+                )
             return seqs_ch1
         else:
             raise ValueError("Unknown memory mode: {}".format(self._wave_mem_mode))
 
-
         return sequence_list
 
     def delete_waveform(self, waveform_name):
-        """ Delete the waveform with name "waveform_name" from the device memory.
-
-        @param str waveform_name: The name of the waveform to be deleted without _ch? postfix.
-                                  Optionally a list of waveform names can be passed.
-
-        @return list: a list of deleted waveform names.
         """
+        Delete the waveform with the specified name from the device memory.
+
+        This method deletes the waveform(s) with the given name(s) from the device memory.
+
+        Parameters
+        ----------
+        waveform_name : str or list of str
+            The name of the waveform to be deleted, without the _ch? postfix.
+            Optionally, a list of waveform names can be provided for deletion.
+
+        Returns
+        -------
+        list
+            A list of deleted waveform names.
+
+        Examples
+        --------
+        Deleting a single waveform:
+        >>> deleted_waveforms = delete_waveform('waveform1')
+        >>> print(deleted_waveforms)
+        ['waveform1']
+
+        Deleting multiple waveforms:
+        >>> deleted_waveforms = delete_waveform(['waveform1', 'waveform2'])
+        >>> print(deleted_waveforms)
+        ['waveform1', 'waveform2']
+        """
+
         if isinstance(waveform_name, str):
             waveform_name = [waveform_name]
 
-        avail_waveforms = self.get_waveform_names()   # incl _ch?.bin postfix
+        avail_waveforms = self.get_waveform_names()  # incl _ch?.bin postfix
         deleted_waveforms = list()
 
         for name in waveform_name:
-            name_ch = self._name_with_ch(name, '?')
+            name_ch = self._name_with_ch(name, "?")
             for waveform in avail_waveforms:
-                if fnmatch(waveform.lower(), name_ch + "{}".format(self._wave_file_extension)):
+                if fnmatch(
+                    waveform.lower(), name_ch + "{}".format(self._wave_file_extension)
+                ):
                     # delete case insensitive from hdd
                     self.write(':MMEM:DEL "{0}"'.format(waveform))
                     deleted_waveforms.append(waveform)
@@ -1069,31 +1401,56 @@ class AWGM819X(PulserInterface):
                     for ch_str in active_analog:
                         ch_num = self.chstr_2_chnum(ch_str)
                         try:
-                            id = self.asset_name_2_id(self._name_with_ch(name, ch_num), ch_num, mode='segment')
+                            id = self.asset_name_2_id(
+                                self._name_with_ch(name, ch_num), ch_num, mode="segment"
+                            )
                         except ValueError:  # got already deleted
                             continue
-                        self.write('TRAC{}:DEL {:d}'.format(ch_num, id))
+                        self.write("TRAC{}:DEL {:d}".format(ch_num, id))
                         # set to available segment
                         ids_avail = self.get_loaded_assets_id(ch_num)
                         if ids_avail:
-                            self.write('TRAC{}:SEL {:d}'.format(ch_num, ids_avail[0]))
+                            self.write("TRAC{}:SEL {:d}".format(ch_num, ids_avail[0]))
                     deleted_waveforms.append(waveform)
 
             for loaded_waveform in self.get_loaded_assets()[0].values():
                 # in pc_hdd mode, avail_waveforms are only on hdd, need to clear the awg mem
-                if self._wave_mem_mode == 'pc_hdd' and fnmatch(loaded_waveform, name_ch):
+                if self._wave_mem_mode == "pc_hdd" and fnmatch(
+                    loaded_waveform, name_ch
+                ):
                     self.clear_all()
 
         return list(set(deleted_waveforms))
 
     def delete_sequence(self, sequence_name):
-        """ Delete the sequence with name "sequence_name" from the device memory.
-
-        @param str sequence_name: The name of the sequence to be deleted
-                                  Optionally a list of sequence names can be passed.
-
-        @return list: a list of deleted sequence names.
         """
+        Delete the sequence with the specified name from the device memory.
+
+        This method deletes the sequence(s) with the given name(s) from the device memory.
+
+        Parameters
+        ----------
+        sequence_name : str or list of str
+            The name of the sequence to be deleted. Optionally, a list of sequence names can be provided for deletion.
+
+        Returns
+        -------
+        list
+            A list of deleted sequence names.
+
+        Examples
+        --------
+        Deleting a single sequence:
+        >>> deleted_sequences = delete_sequence('sequence1')
+        >>> print(deleted_sequences)
+        ['sequence1']
+
+        Deleting multiple sequences:
+        >>> deleted_sequences = delete_sequence(['sequence1', 'sequence2'])
+        >>> print(deleted_sequences)
+        ['sequence1', 'sequence2']
+        """
+
         if isinstance(sequence_name, str):
             sequence_name = [sequence_name]
 
@@ -1115,14 +1472,15 @@ class AWGM819X(PulserInterface):
                 # todo: delete only waveforms in sequence or think about only unloading the sequence
                 # while keeping the waveforms
                 self.clear_all()
-                self.write_all_ch(':STAB{}:RES',
-                                  all_by_one={'m8195a': True})  # Reset all sequence table entries to default values
+                self.write_all_ch(
+                    ":STAB{}:RES", all_by_one={"m8195a": True}
+                )  # Reset all sequence table entries to default values
                 deleted_sequences.append(name)
 
         return list(set(deleted_sequences))
 
     def get_interleave(self):
-        """ Check whether Interleave is ON or OFF in AWG.
+        """Check whether Interleave is ON or OFF in AWG.
 
         @return bool: True: ON, False: OFF
 
@@ -1131,31 +1489,56 @@ class AWGM819X(PulserInterface):
         return False
 
     def set_interleave(self, state=False):
-        """ Turns the interleave of an AWG on or off.
-
-        @param bool state: The state the interleave should be set to
-                           (True: ON, False: OFF)
-
-        @return bool: actual interleave status (True: ON, False: OFF)
-
-        Note: After setting the interleave of the device, retrieve the
-              interleave again and use that information for further processing.
-
-        Unused for pulse generator hardware other than an AWG.
         """
+        Toggle the interleave mode of an AWG on or off.
+
+        This method sets the interleave mode of an Arbitrary Waveform Generator (AWG) to either on or off.
+
+        Parameters
+        ----------
+        state : bool
+            The desired state of the interleave (True for ON, False for OFF).
+
+        Returns
+        -------
+        bool
+            The actual interleave status after the change (True for ON, False for OFF).
+
+        Notes
+        -----
+        After setting the interleave mode, it is recommended to retrieve the current interleave status
+        to confirm the change and use that information for further processing.
+
+        This method is applicable only to AWG devices and is not used for other pulse generator hardware.
+
+        Examples
+        --------
+        Turn on the interleave:
+        >>> status = set_interleave(True)
+        >>> print(status)
+        True
+
+        Turn off the interleave:
+        >>> status = set_interleave(False)
+        >>> print(status)
+        False
+        """
+
         if state:
-            self.log.warning('Interleave mode not available for the AWG M819xA '
-                             'Series!\n'
-                             'Method call will be ignored.')
+            self.log.warning(
+                "Interleave mode not available for the AWG M819xA "
+                "Series!\n"
+                "Method call will be ignored."
+            )
         return self.get_interleave()
 
     def reset(self):
-        """ Reset the device.
+        """Reset the device.
 
         @return int: error code (0:OK, -1:error)
         """
-        self.write('*RST')
-        self.write('*WAI')
+        self.write("*RST")
+        self.write("*WAI")
 
         self._flag_segment_table_req_update = True
 
@@ -1166,7 +1549,7 @@ class AWGM819X(PulserInterface):
     ################################################################################
 
     def set_seq_mode(self, mode):
-        self.write_all_ch(":FUNC{}:MODE {}", mode, all_by_one={'m8195a': True})
+        self.write_all_ch(":FUNC{}:MODE {}", mode, all_by_one={"m8195a": True})
 
     def _set_dac_resolution(self):
         pass
@@ -1204,12 +1587,12 @@ class AWGM819X(PulserInterface):
         pass
 
     def _init_device(self):
-        """ Run those methods during the initialization process."""
+        """Run those methods during the initialization process."""
 
         self.reset()
         constr = self.get_constraints()
 
-        self.write(':ROSC:SOUR INT')  # Chose source for reference clock
+        self.write(":ROSC:SOUR INT")  # Chose source for reference clock
 
         self._set_awg_mode()
 
@@ -1219,15 +1602,15 @@ class AWGM819X(PulserInterface):
 
         self._set_dac_resolution()
         self._set_sample_rate_div()
-        self.set_seq_mode('ARB')
+        self.set_seq_mode("ARB")
 
         # 2. Define one or multiple segments using the various forms of TRAC:DEF
         # done in load_waveform
         # 3. Fill the segments with values and marker data
         # empty at init
         # 4. Select the segment to be output in arbitrary waveform mode using
-        self.write(':TRAC1:SEL 1')
-        self.write(':TRAC2:SEL 1')
+        self.write(":TRAC1:SEL 1")
+        self.write(":TRAC2:SEL 1")
 
         # Set the waveform directory on the local pc:
         self.write(':MMEM:CDIR "{0}"'.format(self._pulsed_file_dir))
@@ -1237,16 +1620,25 @@ class AWGM819X(PulserInterface):
         self._set_dac_amplifier_mode()
 
         init_levels = self._get_init_output_levels()
-        self.set_analog_level(amplitude=init_levels['a_ampl'], offset=init_levels['a_offs'])
-        self.set_digital_level(low=init_levels['d_ampl_low'], high=init_levels['d_ampl_high'])
+        self.set_analog_level(
+            amplitude=init_levels["a_ampl"], offset=init_levels["a_offs"]
+        )
+        self.set_digital_level(
+            low=init_levels["d_ampl_low"], high=init_levels["d_ampl_high"]
+        )
 
-        self._segment_table = [[], []]  # [0]: ch1, [1]: ch2. Local, read-only copy of the device segment table
+        self._segment_table = [
+            [],
+            [],
+        ]  # [0]: ch1, [1]: ch2. Local, read-only copy of the device segment table
         self._flag_segment_table_req_update = True  # local copy requires update
 
     def _load_list_2_dict(self, load_dict):
 
         def _create_load_dict_allch(load_dict):
-            waveform = load_dict[0]  # awg8196a: 1 name per segment, no individual name per channel
+            waveform = load_dict[
+                0
+            ]  # awg8196a: 1 name per segment, no individual name per channel
             new_dict = dict()
 
             active_analog = self._get_active_d_or_a_channels(only_analog=True)
@@ -1265,7 +1657,7 @@ class AWGM819X(PulserInterface):
                 pattern = ".*_ch[0-9]+?"
                 has_ch_ext = True if re.match(pattern, waveform) is not None else False
                 if has_ch_ext:
-                    channel = int(waveform.rsplit('_ch', 1)[1][0])
+                    channel = int(waveform.rsplit("_ch", 1)[1][0])
                     new_dict[channel] = waveform
                 else:
                     break
@@ -1280,7 +1672,7 @@ class AWGM819X(PulserInterface):
             self.log.error("Load dict of unexpected type: {}".format(type(load_dict)))
 
     def _load_wave_from_memory(self, load_dict, to_nextfree_segment=False):
-        if self._wave_mem_mode == 'pc_hdd':
+        if self._wave_mem_mode == "pc_hdd":
             path = self._pulsed_file_dir
             offset = 0
 
@@ -1288,41 +1680,53 @@ class AWGM819X(PulserInterface):
                 self.clear_all()
 
             for chnl_num, waveform in load_dict.items():
-                name = waveform.split('.bin', 1)[0]  # name in front of .bin/.bin8
+                name = waveform.split(".bin", 1)[0]  # name in front of .bin/.bin8
                 filepath = os.path.join(path, waveform)
 
                 data = self.query_bin(':MMEM:DATA? "{0}"'.format(filepath))
                 n_samples = len(data)
                 if self.interleaved_wavefile:
                     n_samples = int(n_samples / 2)
-                segment_id = self.query('TRAC{0:d}:DEF:NEW? {1:d}'.format(chnl_num, n_samples)) \
-                             + '_ch{:d}'.format(chnl_num)
+                segment_id = self.query(
+                    "TRAC{0:d}:DEF:NEW? {1:d}".format(chnl_num, n_samples)
+                ) + "_ch{:d}".format(chnl_num)
                 segment_id_per_ch = segment_id.rsplit("_ch", 1)[0]
-                self.write_bin(':TRAC{0}:DATA {1}, {2},'.format(chnl_num, segment_id_per_ch, offset), data)
-                self.write(':TRAC{0}:NAME {1}, "{2}"'.format(chnl_num, segment_id_per_ch, name))
+                self.write_bin(
+                    ":TRAC{0}:DATA {1}, {2},".format(
+                        chnl_num, segment_id_per_ch, offset
+                    ),
+                    data,
+                )
+                self.write(
+                    ':TRAC{0}:NAME {1}, "{2}"'.format(chnl_num, segment_id_per_ch, name)
+                )
 
                 self._check_uploaded_wave_name(chnl_num, name, segment_id_per_ch)
 
                 self._flag_segment_table_req_update = True
-                self.log.debug("Loading waveform {} of len {} to AWG ch {}, segment {}.".format(
-                    name, n_samples, chnl_num, segment_id_per_ch))
+                self.log.debug(
+                    "Loading waveform {} of len {} to AWG ch {}, segment {}.".format(
+                        name, n_samples, chnl_num, segment_id_per_ch
+                    )
+                )
 
-        elif self._wave_mem_mode == 'awg_segments':
+        elif self._wave_mem_mode == "awg_segments":
 
             if to_nextfree_segment:
-                self.log.warning("In awg_segments memory mode, 'to_nextfree_segment' has no effect."
-                                 "Loading only marks active, segments need to be written before.")
+                self.log.warning(
+                    "In awg_segments memory mode, 'to_nextfree_segment' has no effect."
+                    "Loading only marks active, segments need to be written before."
+                )
             # m8195a: 1 name per segment, no individual name per channel
 
             for chnl_num, waveform in load_dict.items():
                 waveform = load_dict[chnl_num]
                 name = waveform
-                if name.split(',')[0] == name:
-                    segment_id = self.asset_name_2_id(name, chnl_num, mode='segment')
+                if name.split(",")[0] == name:
+                    segment_id = self.asset_name_2_id(name, chnl_num, mode="segment")
                 else:
-                    segment_id = np.int(name.split(',')[0])
-                self.write(':TRAC{0}:SEL {1}'.format(chnl_num, segment_id))
-
+                    segment_id = np.int(name.split(",")[0])
+                self.write(":TRAC{0}:SEL {1}".format(chnl_num, segment_id))
 
         else:
             raise ValueError("Unknown memory mode: {}".format(self._wave_mem_mode))
@@ -1337,20 +1741,24 @@ class AWGM819X(PulserInterface):
         :return:
         """
         if mode is "cont":
-            self.write_all_ch(":INIT:CONT{}:STAT ON",  all_by_one={'m8195a': True})
-            self.write_all_ch(":INIT:GATE{}:STAT OFF", all_by_one={'m8195a': True})
+            self.write_all_ch(":INIT:CONT{}:STAT ON", all_by_one={"m8195a": True})
+            self.write_all_ch(":INIT:GATE{}:STAT OFF", all_by_one={"m8195a": True})
         elif mode is "trig":
-            self.write_all_ch(":INIT:CONT{}:STAT OFF", all_by_one={'m8195a': True})
-            self.write_all_ch(":INIT:GATE{}:STAT OFF", all_by_one={'m8195a': True})
+            self.write_all_ch(":INIT:CONT{}:STAT OFF", all_by_one={"m8195a": True})
+            self.write_all_ch(":INIT:GATE{}:STAT OFF", all_by_one={"m8195a": True})
         elif mode is "gate":
-            self.write_all_ch(":INIT:CONT{}:STAT OFF", all_by_one={'m8195a': True})
-            self.write_all_ch(":INIT:GATE{}:STAT ON",  all_by_one={'m8195a': True})
+            self.write_all_ch(":INIT:CONT{}:STAT OFF", all_by_one={"m8195a": True})
+            self.write_all_ch(":INIT:GATE{}:STAT ON", all_by_one={"m8195a": True})
         else:
             self.log.error("Unknown trigger mode: {}".format(mode))
 
     def get_trigger_mode(self):
-        cont = bool(int(self.query_all_ch(":INIT:CONT{}:STAT?", all_by_one={'m8195a': True})))
-        gate = bool(int(self.query_all_ch(":INIT:GATE{}:STAT?", all_by_one={'m8195a': True})))
+        cont = bool(
+            int(self.query_all_ch(":INIT:CONT{}:STAT?", all_by_one={"m8195a": True}))
+        )
+        gate = bool(
+            int(self.query_all_ch(":INIT:GATE{}:STAT?", all_by_one={"m8195a": True}))
+        )
 
         if cont and not gate:
             return "cont"
@@ -1359,20 +1767,21 @@ class AWGM819X(PulserInterface):
         if not cont and gate:
             return "gate"
 
-        self.log.warning("Unexpected trigger mode found. Cont {}, Gate {}".format(
-                            cont, gate))
+        self.log.warning(
+            "Unexpected trigger mode found. Cont {}, Gate {}".format(cont, gate)
+        )
         return ""
 
     def get_dynamic_mode(self):
-        return self.query_all_ch(":STAB{}:DYN?", all_by_one={'m8195a': True})
+        return self.query_all_ch(":STAB{}:DYN?", all_by_one={"m8195a": True})
 
     def check_dev_error(self):
 
         has_error_occured = False
 
         for i in range(30):  # error buffer of device is 30
-            raw_str = self.query(':SYST:ERR?', force_no_check=True)
-            is_error = not ('0' in raw_str[0])
+            raw_str = self.query(":SYST:ERR?", force_no_check=True)
+            is_error = not ("0" in raw_str[0])
             if is_error:
                 self.log.warn("AWG issued error: {}".format(raw_str))
                 has_error_occured = True
@@ -1383,18 +1792,22 @@ class AWGM819X(PulserInterface):
 
     def _digital_ch_2_internal(self, d_ch_name):
         if d_ch_name not in self.ch_map:
-            self.log.error("Don't understand digital channel name: {}".format(d_ch_name))
+            self.log.error(
+                "Don't understand digital channel name: {}".format(d_ch_name)
+            )
 
         return self.ch_map[str(d_ch_name)]
 
     def _digital_ch_corresponding_analogue_ch(self, d_ch_name):
         int_name = self._digital_ch_2_internal(d_ch_name)
-        if '1' in int_name:
-            return 'a_ch1'
-        elif '2' in int_name:
-            return  'a_ch2'
+        if "1" in int_name:
+            return "a_ch1"
+        elif "2" in int_name:
+            return "a_ch2"
         else:
-            raise RuntimeError("Unknown exception. Should only have 1 or 2 in marker name")
+            raise RuntimeError(
+                "Unknown exception. Should only have 1 or 2 in marker name"
+            )
 
     def _analogue_ch_corresponding_digital_chs(self, a_ch_name):
         # return value must be: [sample marker, sync marker]
@@ -1406,10 +1819,9 @@ class AWGM819X(PulserInterface):
 
     @abstractmethod
     def float_to_sample(self, val):
-       pass
+        pass
 
     def _float_to_int(self, val, n_bits):
-
         """
         :param val: np.array(dtype=float64) of sampled values from sequencegenerator.sample_pulse_block_ensemble().
                     normed (-1...1) where 1 encodes the full Vpp as set in 'PulsedGui/Pulsegenerator Settings'.
@@ -1419,25 +1831,29 @@ class AWGM819X(PulserInterface):
         :return:    np.array(dtype=int16)
         """
 
-        bitsize = int(2 ** n_bits)
+        bitsize = int(2**n_bits)
         min_intval = -bitsize / 2
         max_intval = bitsize / 2 - 1
 
         max_u_samples = 1  # data should be normalized in (-1..1)
 
         if max(abs(val)) > 1:
-            self.log.warning("Samples from sequencegenerator out of range. Normalizing to -1..1. Please change the "
-                             "maximum peak to peak Voltage in the Pulse Generator Settings if you want to use a higher "
-                             "power.")
+            self.log.warning(
+                "Samples from sequencegenerator out of range. Normalizing to -1..1. Please change the "
+                "maximum peak to peak Voltage in the Pulse Generator Settings if you want to use a higher "
+                "power."
+            )
             biggest_val = max([abs(np.min(val)), np.max(val)])
             max_u_samples = biggest_val
         # manual 8.22.4 Waveform Data Format in Direct Mode
         # 2 bits LSB reserved for markers
-        mapper = scipy.interpolate.interp1d([-max_u_samples, max_u_samples], [min_intval, max_intval])
+        mapper = scipy.interpolate.interp1d(
+            [-max_u_samples, max_u_samples], [min_intval, max_intval]
+        )
 
         return mapper(val)
 
-    def bool_to_sample(self, val_dch_1, val_dch_2, int_type_str='int16'):
+    def bool_to_sample(self, val_dch_1, val_dch_2, int_type_str="int16"):
         """
         Takes 2 digital sample values from the sequence generator and converts them to int.
         For AWG819x always two digital channels are tied with a single analogue output.
@@ -1463,14 +1879,13 @@ class AWGM819X(PulserInterface):
         """
         pass
 
-
     def _name_with_ch(self, name, ch_num):
         """
         Prepares the final wavename with (M8190A) or without (M8195A) channel extension.
         Preserves capital letters.
         Eg. Rabi -> Rabi_ch1
         """
-        return name + '_ch' + str(ch_num)
+        return name + "_ch" + str(ch_num)
 
     def _wavename_2_fname(self, wave_name):
         """
@@ -1493,14 +1908,18 @@ class AWGM819X(PulserInterface):
 
         wave_name_on_dev = self.get_loaded_asset_name_by_id(ch_num, segment_id)
         if wave_name_on_dev != wave_name:
-            self.log.warning("Name of waveform altered during upload: {} -> {} Unsupported characters?".format(
-                wave_name, wave_name_on_dev
-            ))
+            self.log.warning(
+                "Name of waveform altered during upload: {} -> {} Unsupported characters?".format(
+                    wave_name, wave_name_on_dev
+                )
+            )
             return 1
 
         return 0
 
-    def _write_wave_to_memory(self, name, analog_samples, digital_samples, active_analog, to_segment_id=1):
+    def _write_wave_to_memory(
+        self, name, analog_samples, digital_samples, active_analog, to_segment_id=1
+    ):
         """
         :param name:
         :param analog_samples:
@@ -1516,63 +1935,98 @@ class AWGM819X(PulserInterface):
             ch_num = self.chstr_2_chnum(ch_str)
             wave_name = self._name_with_ch(name, ch_num)
 
-            comb_samples = self._compile_bin_samples(analog_samples, digital_samples, ch_str)
+            comb_samples = self._compile_bin_samples(
+                analog_samples, digital_samples, ch_str
+            )
 
             t_start = time.time()
 
-            if self._wave_mem_mode == 'pc_hdd':
+            if self._wave_mem_mode == "pc_hdd":
                 # todo: check if working for awg8195a
                 if to_segment_id != 1:
-                    self.log.warning("In pc_hdd memory mode, 'to_segment_id' has no effect."
-                                     "Writing to hdd without setting segment.")
+                    self.log.warning(
+                        "In pc_hdd memory mode, 'to_segment_id' has no effect."
+                        "Writing to hdd without setting segment."
+                    )
 
                 filename = self._wavename_2_fname(wave_name)
                 waveforms.append(filename)
 
                 if idx_ch == 0:
                     # deletes waveform, all channels
-                    self.delete_waveform(self._fname_2_wavename(filename, incl_ch_postfix=False))
+                    self.delete_waveform(
+                        self._fname_2_wavename(filename, incl_ch_postfix=False)
+                    )
                 self.write_bin(':MMEM:DATA "{0}", '.format(filename), comb_samples)
 
                 self.log.debug("Waveform {} written to {}".format(wave_name, filename))
 
-            elif self._wave_mem_mode == 'awg_segments':
+            elif self._wave_mem_mode == "awg_segments":
 
                 if wave_name in self.get_loaded_assets_name(ch_num):
-                    seg_id_exist = self.asset_name_2_id(wave_name, ch_num, mode='segment')
+                    seg_id_exist = self.asset_name_2_id(
+                        wave_name, ch_num, mode="segment"
+                    )
                     self.write("TRAC{:d}:DEL {}".format(ch_num, seg_id_exist))
-                    self.log.debug("Deleting segment {} ch {} for existing wave {}".format(seg_id_exist, ch_num, wave_name))
+                    self.log.debug(
+                        "Deleting segment {} ch {} for existing wave {}".format(
+                            seg_id_exist, ch_num, wave_name
+                        )
+                    )
 
                 segment_id = to_segment_id
-                if name.split(',')[0] != name:
+                if name.split(",")[0] != name:
                     # todo: this breaks if there is a , in the name without number
-                    segment_id = np.int(name.split(',')[0])
-                    self.log.warning("Loading wave to specified segment ({}) via name will deprecate.".format(segment_id))
+                    segment_id = np.int(name.split(",")[0])
+                    self.log.warning(
+                        "Loading wave to specified segment ({}) via name will deprecate.".format(
+                            segment_id
+                        )
+                    )
                 if segment_id == -1:
                     # to next free segment
-                    segment_id = self.query('TRAC{0:d}:DEF:NEW? {1:d}'.format(ch_num, len(analog_samples[ch_str])))
+                    segment_id = self.query(
+                        "TRAC{0:d}:DEF:NEW? {1:d}".format(
+                            ch_num, len(analog_samples[ch_str])
+                        )
+                    )
                     # only need the next free id, definition and writing is performed below again
                     # so delete defined segment again
                     self.write("TRAC{:d}:DEL {}".format(ch_num, segment_id))
 
-                segment_id_ch = str(segment_id) + '_ch{:d}'.format(ch_num)
-                self.log.debug("Writing wave {} to ch {} segment_id {}".format(wave_name, ch_str, segment_id_ch))
+                segment_id_ch = str(segment_id) + "_ch{:d}".format(ch_num)
+                self.log.debug(
+                    "Writing wave {} to ch {} segment_id {}".format(
+                        wave_name, ch_str, segment_id_ch
+                    )
+                )
 
                 # delete if the segment is already existing
                 loaded_segments_id = self.get_loaded_assets_id(ch_num)
                 if str(segment_id) in loaded_segments_id:
                     # clear the segment
-                    self.write(':TRAC:DEL {0}'.format(segment_id))
+                    self.write(":TRAC:DEL {0}".format(segment_id))
 
                 # define the size of a waveform segment, marker samples do not count. If the channel is sourced from
                 # Extended Memory, the same segment is defined on all other channels sourced from Extended Memory.
                 # Comb samples written, but len(comb_samples) doesn't know whether interleaved data.
-                self.write(':TRAC{0}:DEF {1}, {2}, {3}'.format(int(ch_num), segment_id, len(analog_samples[ch_str]), 0))
+                self.write(
+                    ":TRAC{0}:DEF {1}, {2}, {3}".format(
+                        int(ch_num), segment_id, len(analog_samples[ch_str]), 0
+                    )
+                )
 
                 # name the segment
-                self.write(':TRAC{0}:NAME {1}, "{2}"'.format(int(ch_num), segment_id, wave_name))  # name the segment
+                self.write(
+                    ':TRAC{0}:NAME {1}, "{2}"'.format(
+                        int(ch_num), segment_id, wave_name
+                    )
+                )  # name the segment
                 # upload
-                self.write_bin(':TRAC{0}:DATA {1}, {2},'.format(int(ch_num), segment_id, 0), comb_samples)
+                self.write_bin(
+                    ":TRAC{0}:DATA {1}, {2},".format(int(ch_num), segment_id, 0),
+                    comb_samples,
+                )
 
                 self._check_uploaded_wave_name(ch_num, wave_name, segment_id)
 
@@ -1582,27 +2036,39 @@ class AWGM819X(PulserInterface):
             else:
                 raise ValueError("Unknown memory mode: {}".format(self._wave_mem_mode))
 
-            transfer_speed_mbs = (comb_samples.nbytes/(1024*1024))/(time.time() - t_start)
-            self.log.debug('Written ({2:.1f} MB/s) to ch={0}: max ampl: {1}'.format(ch_str,
-                                                                                analog_samples[ch_str].max(),
-                                                                                transfer_speed_mbs))
+            transfer_speed_mbs = (comb_samples.nbytes / (1024 * 1024)) / (
+                time.time() - t_start
+            )
+            self.log.debug(
+                "Written ({2:.1f} MB/s) to ch={0}: max ampl: {1}".format(
+                    ch_str, analog_samples[ch_str].max(), transfer_speed_mbs
+                )
+            )
 
         return waveforms
 
     def has_sequence_mode(self):
-        """ Asks the pulse generator whether sequence mode exists.
+        """Asks the pulse generator whether sequence mode exists.
 
         @return: bool, True for yes, False for no.
         """
         return self._sequence_mode
 
     def write(self, command):
-        """ Sends a command string to the device.
-
-            @param string command: string containing the command
-
-            @return int: error code (0:OK, -1:error)
         """
+        Send a command string to the device.
+
+        Parameters
+        ----------
+        command : str
+            String containing the command.
+
+        Returns
+        -------
+        int
+            Error code (0: OK, -1: error).
+        """
+
         bytes_written = self.awg.write(command)
 
         if self._debug_check_all_commands:
@@ -1612,15 +2078,27 @@ class AWGM819X(PulserInterface):
         return 0
 
     def write_bin(self, command, values):
-        """ Sends a command string to the device.
-
-                    @param string command: string containing the command
-
-                    @return int: error code (0:OK, -1:error)
         """
+        Sends a command string to the device.
+
+        Parameters
+        ----------
+        command : str
+            String containing the command.
+
+        Returns
+        -------
+        int
+            Error code (0: OK, -1: error).
+        """
+
         self.awg.timeout = None
-        bytes_written = self.awg.write_binary_values(command, datatype=self._wave_transfer_datatype, is_big_endian=False,
-                                                                       values=values)
+        bytes_written = self.awg.write_binary_values(
+            command,
+            datatype=self._wave_transfer_datatype,
+            is_big_endian=False,
+            values=values,
+        )
         self.awg.timeout = self._awg_timeout * 1000
 
         return 0
@@ -1637,7 +2115,7 @@ class AWGM819X(PulserInterface):
         """
 
         if all_by_one is None:
-            all_by_one = {'m8190a': False, 'm8195a': False}
+            all_by_one = {"m8190a": False, "m8195a": False}
 
         single_cmd = False
         if self._MODEL.lower() in all_by_one:
@@ -1645,7 +2123,7 @@ class AWGM819X(PulserInterface):
 
         if single_cmd:
             # replace first braces that, usually to indicate channel
-            command = command.replace("{","", 1)
+            command = command.replace("{", "", 1)
             command = command.replace("}", "", 1)
             self.write(command.format(*args))
         else:
@@ -1666,7 +2144,7 @@ class AWGM819X(PulserInterface):
         """
 
         if all_by_one is None:
-            all_by_one = {'m8190a': False, 'm8195a': False}
+            all_by_one = {"m8190a": False, "m8195a": False}
 
         single_cmd = False
 
@@ -1686,17 +2164,27 @@ class AWGM819X(PulserInterface):
                 retlist = self.query(command.format(ch_num, *args))
             collapsed_ret = np.unique(np.asarray(retlist))
             if collapsed_ret.size > 1:
-                self.log.error("Unexpected non-identical response on channels: {}".format(retlist))
+                self.log.error(
+                    "Unexpected non-identical response on channels: {}".format(retlist)
+                )
 
             return collapsed_ret[0]
 
     def query(self, question, force_no_check=False):
-        """ Asks the device a 'question' and receive and return an answer from it.
-
-        @param string question: string containing the command
-
-        @return string: the answer of the device to the 'question' in a string
         """
+        Asks the device a 'question' and receives and returns an answer from it.
+
+        Parameters
+        ----------
+        question : str
+            String containing the command.
+
+        Returns
+        -------
+        str
+            The answer of the device to the 'question'.
+        """
+
         ret = self.awg.query(question).strip().strip('"')
         if self._debug_check_all_commands and not force_no_check:
             if 0 != self.check_dev_error():
@@ -1706,7 +2194,9 @@ class AWGM819X(PulserInterface):
 
     def query_bin(self, question):
 
-        return self.awg.query_binary_values(question, datatype=self._wave_transfer_datatype, is_big_endian=False)
+        return self.awg.query_binary_values(
+            question, datatype=self._wave_transfer_datatype, is_big_endian=False
+        )
 
     def _is_awg_running(self):
         """
@@ -1720,7 +2210,7 @@ class AWGM819X(PulserInterface):
         # 8 CH04 is running
         # run_state is sum of these
 
-        run_state = self.query(':STAT:OPER:RUN:COND?')
+        run_state = self.query(":STAT:OPER:RUN:COND?")
 
         if int(run_state) == 0:
             return False
@@ -1735,8 +2225,8 @@ class AWGM819X(PulserInterface):
 
         state = 0
 
-        state += int(self.query(':OUTP1?'))
-        state += int(self.query(':OUTP2?'))
+        state += int(self.query(":OUTP1?"))
+        state += int(self.query(":OUTP2?"))
 
         if int(state) == 0:
             return False
@@ -1751,8 +2241,8 @@ class AWGM819X(PulserInterface):
         @return list: Sorted list of channels
         """
         configs = self.get_constraints().activation_config
-        if 'all' in configs:
-            largest_config = configs['all']
+        if "all" in configs:
+            largest_config = configs["all"]
         else:
             largest_config = list(configs.values())[0]
             for config in configs.values():
@@ -1767,7 +2257,7 @@ class AWGM819X(PulserInterface):
 
         @return list: Sorted list of analog channels
         """
-        return [chnl for chnl in self._get_all_channels() if chnl.startswith('a')]
+        return [chnl for chnl in self._get_all_channels() if chnl.startswith("a")]
 
     def _get_active_d_or_a_channels(self, only_analog=False, only_digital=False):
         """
@@ -1779,8 +2269,10 @@ class AWGM819X(PulserInterface):
         active_channels = {chnl for chnl in activation_dict if activation_dict[chnl]}
 
         active_ch = sorted(chnl for chnl in active_channels)
-        active_analog = sorted(chnl for chnl in active_channels if chnl.startswith('a'))
-        active_digital = sorted(chnl for chnl in active_channels if chnl.startswith('d'))
+        active_analog = sorted(chnl for chnl in active_channels if chnl.startswith("a"))
+        active_digital = sorted(
+            chnl for chnl in active_channels if chnl.startswith("d")
+        )
 
         if only_analog:
             active_ch = active_analog
@@ -1798,7 +2290,7 @@ class AWGM819X(PulserInterface):
 
         @return list: Sorted list of digital channels
         """
-        return [chnl for chnl in self._get_all_channels() if chnl.startswith('d')]
+        return [chnl for chnl in self._get_all_channels() if chnl.startswith("d")]
 
     def _output_levels_by_config(self, d_ampl_low, d_ampl_high):
         if self._d_ch_level_low_high:
@@ -1806,16 +2298,19 @@ class AWGM819X(PulserInterface):
                 ch_idx = i + 1
                 low = self._d_ch_level_low_high[i][0]
                 high = self._d_ch_level_low_high[i][1]
-                ch_str = 'd_ch{:d}'.format(ch_idx)
+                ch_str = "d_ch{:d}".format(ch_idx)
 
                 if ch_str in d_ampl_low.keys() and ch_str in d_ampl_high.keys():
-                    d_ampl_low['d_ch{:d}'.format(ch_idx)] = low
-                    d_ampl_high['d_ch{:d}'.format(ch_idx)] = high
+                    d_ampl_low["d_ch{:d}".format(ch_idx)] = low
+                    d_ampl_high["d_ch{:d}".format(ch_idx)] = high
         else:
             pass  # use passed (default) values
 
-        self.log.debug("Overriding output levels from config: d_ampl_low: {}, d_ampl_high: {}".format(
-                    d_ampl_low, d_ampl_high))
+        self.log.debug(
+            "Overriding output levels from config: d_ampl_low: {}, d_ampl_high: {}".format(
+                d_ampl_low, d_ampl_high
+            )
+        )
 
         return d_ampl_low, d_ampl_high
 
@@ -1836,18 +2331,30 @@ class AWGM819X(PulserInterface):
                 self.log.debug("Local segment table seems out-of-date. Fetching.")
                 segment_table_1, segment_table_2 = self.update_segment_table()
             else:
-                segment_table_1, segment_table_2 = self._segment_table[0], self._segment_table[1]
+                segment_table_1, segment_table_2 = (
+                    self._segment_table[0],
+                    self._segment_table[1],
+                )
 
         else:
             if force_from_local_copy == 1:
                 if self._flag_segment_table_req_update:
-                    self.log.warning("Forcing out-of-date local segment table that needs update")
-                segment_table_1, segment_table_2 = self._segment_table[0], self._segment_table[1]
+                    self.log.warning(
+                        "Forcing out-of-date local segment table that needs update"
+                    )
+                segment_table_1, segment_table_2 = (
+                    self._segment_table[0],
+                    self._segment_table[1],
+                )
 
             elif force_from_local_copy == 0:
                 segment_table_1, segment_table_2 = self.update_segment_table()
             else:
-                raise ValueError("Unexpected input for force_from_local_copy: {}".format(force_from_local_copy))
+                raise ValueError(
+                    "Unexpected input for force_from_local_copy: {}".format(
+                        force_from_local_copy
+                    )
+                )
 
         if ch_num == 1:
             return segment_table_1
@@ -1860,8 +2367,8 @@ class AWGM819X(PulserInterface):
 
         self.log.debug("Reading device segment table for ch {}".format(ch_num))
 
-        names = self.get_loaded_assets_name(ch_num, mode='segment')
-        ids = self.get_loaded_assets_id(ch_num, mode='segment')
+        names = self.get_loaded_assets_name(ch_num, mode="segment")
+        ids = self.get_loaded_assets_id(ch_num, mode="segment")
 
         zipped = zip(ids, names)
         segment_table = []
@@ -1870,7 +2377,7 @@ class AWGM819X(PulserInterface):
             self.log.error("Segment table on device seems unaligned.")
             return segment_table
 
-        segment_table = [[x,y] for x,y in sorted(zipped)]
+        segment_table = [[x, y] for x, y in sorted(zipped)]
 
         return segment_table
 
@@ -1884,8 +2391,10 @@ class AWGM819X(PulserInterface):
             name = [row[1] for row in segment_table][idx_id]
 
         except ValueError:
-            self.log.warning("Couldn't find segment id {} in ch {}".format(seg_id, ch_num))
-            return ''
+            self.log.warning(
+                "Couldn't find segment id {} in ch {}".format(seg_id, ch_num)
+            )
+            return ""
         return name
 
     def get_segment_id(self, segment_waveform_name, ch_num):
@@ -1904,7 +2413,11 @@ class AWGM819X(PulserInterface):
             id = [row[0] for row in segment_table][idx_id]
 
         except ValueError:
-            self.log.warning("Couldn't find waveform {} in ch {}".format(segment_waveform_name, ch_num))
+            self.log.warning(
+                "Couldn't find waveform {} in ch {}".format(
+                    segment_waveform_name, ch_num
+                )
+            )
             return -1
         return id
 
@@ -1916,31 +2429,31 @@ class AWGM819X(PulserInterface):
     def _get_loaded_seq_name(self, ch_num, idx):
         pass
 
-    def get_loaded_assets_num(self, ch_num, mode='segment'):
+    def get_loaded_assets_num(self, ch_num, mode="segment"):
         """
         Retrieves the total number of assets uploaded to the awg memory.
         This is not == "loaded_asset" which is the waveform / segment marked active.
         """
-        if mode == 'segment':
-            raw_str = self.query(':TRAC{:d}:CAT?'.format(ch_num))
-        elif mode == 'sequence':
+        if mode == "segment":
+            raw_str = self.query(":TRAC{:d}:CAT?".format(ch_num))
+        elif mode == "sequence":
             raw_str = self._get_loaded_seq_catalogue(ch_num)
         else:
             self.log.error("Unknown assets mode: {}".format(mode))
             return 0
 
-        if raw_str.replace(" ","") == "0,0":   # awg response on 8195A without spaces
+        if raw_str.replace(" ", "") == "0,0":  # awg response on 8195A without spaces
             return 0
         else:
-            splitted = raw_str.rsplit(',')
+            splitted = raw_str.rsplit(",")
 
-            return int(len(splitted)/2)
+            return int(len(splitted) / 2)
 
-    def get_loaded_assets_id(self, ch_num, mode='segment'):
+    def get_loaded_assets_id(self, ch_num, mode="segment"):
 
-        if mode == 'segment':
-            raw_str = self.query(':TRAC{:d}:CAT?'.format(ch_num))
-        elif mode == 'sequence':
+        if mode == "segment":
+            raw_str = self.query(":TRAC{:d}:CAT?".format(ch_num))
+        elif mode == "sequence":
             raw_str = self._get_loaded_seq_catalogue(ch_num)
         else:
             self.log.error("Unknown assets mode: {}".format(mode))
@@ -1950,24 +2463,24 @@ class AWGM819X(PulserInterface):
         if n_assets == 0:
             return []
         else:
-            splitted = raw_str.rsplit(',')
+            splitted = raw_str.rsplit(",")
             ids = [int(x) for x in splitted[0::2]]
 
             return ids
 
-    def get_loaded_assets_name(self, ch_num, mode='segment'):
+    def get_loaded_assets_name(self, ch_num, mode="segment"):
         """
-          Retrieves the names of all assets uploaded to the awg memory.
-          This is not == "loaded_asset" which is the waveform / segment marked active.
+        Retrieves the names of all assets uploaded to the awg memory.
+        This is not == "loaded_asset" which is the waveform / segment marked active.
         """
 
         asset_ids = self.get_loaded_assets_id(ch_num, mode)
         names = []
         for i in asset_ids:
 
-            if mode == 'segment':
-                names.append(self.query(':TRAC{:d}:NAME? {:d}'.format(ch_num, i)))
-            elif mode == 'sequence':
+            if mode == "segment":
+                names.append(self.query(":TRAC{:d}:NAME? {:d}".format(ch_num, i)))
+            elif mode == "sequence":
                 names.append(self._get_loaded_seq_name(ch_num, i))
             else:
                 self.log.error("Unknown assets mode: {}".format(mode))
@@ -1975,19 +2488,21 @@ class AWGM819X(PulserInterface):
 
         return names
 
-    def get_loaded_asset_name_by_id(self, ch_num, id, mode='segment'):
+    def get_loaded_asset_name_by_id(self, ch_num, id, mode="segment"):
         asset_names = self.get_loaded_assets_name(ch_num, mode)
         asset_ids = self.get_loaded_assets_id(ch_num, mode)
 
         try:
             idx = asset_ids.index(int(id))
         except ValueError:
-            self.log.warning("Couldn't find {} id {} in loaded assetes".format(mode, id))
+            self.log.warning(
+                "Couldn't find {} id {} in loaded assetes".format(mode, id)
+            )
             return ""
 
         return asset_names[idx]
 
-    def asset_name_2_id(self, name, ch_num, mode='segment'):
+    def asset_name_2_id(self, name, ch_num, mode="segment"):
         names = self.get_loaded_assets_name(ch_num, mode)
         idx = names.index(name)
 
@@ -2006,7 +2521,7 @@ class AWGM819X(PulserInterface):
         """
 
         awg_mode = self.query("FUNC{:d}:MODE?".format(ch_num))
-        if awg_mode == 'ARB':
+        if awg_mode == "ARB":
             self.log.warning("Sequencer state is undefined in arb mode")
             return 0, 0
 
@@ -2019,7 +2534,7 @@ class AWGM819X(PulserInterface):
 
         return state, seq_table_id
 
-    def set_trig_polarity(self, pol='pos'):
+    def set_trig_polarity(self, pol="pos"):
         if pol is "pos":
             self.write(":ARM:TRIG:SLOP POS")
         elif pol is "neg":
@@ -2039,7 +2554,7 @@ class AWGM819X(PulserInterface):
         :param filename:
         :return:
         """
-        return filename.rsplit('.', 1)[0]
+        return filename.rsplit(".", 1)[0]
 
     def _create_dir(self, path):
         if not os.path.exists(path):
@@ -2062,14 +2577,18 @@ class AWGM819X(PulserInterface):
         """
 
         def single_str_2_num(chstr):
-            if 'a_ch' in chstr:
-                ch_num = int(chstr.rsplit('_ch', 1)[1])
-            elif 'd_ch' in chstr:
+            if "a_ch" in chstr:
+                ch_num = int(chstr.rsplit("_ch", 1)[1])
+            elif "d_ch" in chstr:
                 # this is M8195A specific
-                ch_num = int(chstr.rsplit('_ch', 1)[1]) + 2
-                if self._MODEL == 'M8190A':
+                ch_num = int(chstr.rsplit("_ch", 1)[1]) + 2
+                if self._MODEL == "M8190A":
                     ch_num = None
-                    self.log.warning("Returning None from channel string {}. Belongs to analog ch for 8190A".format(chstr))
+                    self.log.warning(
+                        "Returning None from channel string {}. Belongs to analog ch for 8190A".format(
+                            chstr
+                        )
+                    )
             else:
                 raise ValueError("Unknown channel string: {}".format(chstr))
             return ch_num
@@ -2086,38 +2605,43 @@ class AWGM819X(PulserInterface):
 
 
 class AWGM8195A(AWGM819X):
-    """ A hardware module for the Keysight M8195A series for generating
-          waveforms and sequences thereof.
+    """A hardware module for the Keysight M8195A series for generating
+        waveforms and sequences thereof.
 
-      Example config for copy-paste:
+    Example config for copy-paste:
 
-          awg8195:
-              module.Class: 'awg.keysight_M819x.AWGM8195A'
-              options:
-                  awg_visa_address: 'TCPIP0::localhost::hislip0::INSTR'
-                  awg_timeout: 20
-                  pulsed_file_dir: 'C:/Software/pulsed_files'               # asset directories should be equal
-                  assets_storage_path: 'C:/Software/saved_pulsed_assets'    # to the ones in sequencegeneratorlogic
-                  sample_rate_div: 1
-                  awg_mode: 'MARK'
-      """
+        awg8195:
+            module.Class: 'awg.keysight_M819x.AWGM8195A'
+            options:
+                awg_visa_address: 'TCPIP0::localhost::hislip0::INSTR'
+                awg_timeout: 20
+                pulsed_file_dir: 'C:/Software/pulsed_files'               # asset directories should be equal
+                assets_storage_path: 'C:/Software/saved_pulsed_assets'    # to the ones in sequencegeneratorlogic
+                sample_rate_div: 1
+                awg_mode: 'MARK'
+    """
 
-    awg_mode_cfg = ConfigOption(name='awg_mode', default='MARK', missing='warn')
+    awg_mode_cfg = ConfigOption(name="awg_mode", default="MARK", missing="warn")
 
-    _wave_mem_mode = ConfigOption(name='waveform_memory_mode', default='awg_segments', missing='nothing')
-    _wave_file_extension = '.bin8'
-    _wave_transfer_datatype = 'b'
+    _wave_mem_mode = ConfigOption(
+        name="waveform_memory_mode", default="awg_segments", missing="nothing"
+    )
+    _wave_file_extension = ".bin8"
+    _wave_transfer_datatype = "b"
 
     _dac_resolution = 8  # fixed 8 bit
     # physical output channel mapping
-    ch_map = {'d_ch1': 3, 'd_ch2': 4}   # awg8195a: digital channels are analogue channels, only different config
+    ch_map = {
+        "d_ch1": 3,
+        "d_ch2": 4,
+    }  # awg8195a: digital channels are analogue channels, only different config
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._sequence_names = []  # awg8195a can only store a single sequence
 
-        if self._wave_mem_mode == 'pc_hdd':
+        if self._wave_mem_mode == "pc_hdd":
             self.log.warning("wave_mem_mode pc_hdd is experimental on m8195a")
 
     @property
@@ -2126,11 +2650,11 @@ class AWGM8195A(AWGM819X):
 
     @property
     def awg_mode(self):
-        return self.query(':INST:DACM?')
+        return self.query(":INST:DACM?")
 
     @property
     def marker_on(self):
-        if self.awg_mode == 'MARK' or self.awg_mode == 'DCM':
+        if self.awg_mode == "MARK" or self.awg_mode == "DCM":
             return True
         return False
 
@@ -2174,29 +2698,32 @@ class AWGM8195A(AWGM819X):
         constraints = PulserConstraints()
 
         # The compatible file formats are hardware specific.
-        constraints.waveform_format = ['bin8']
-        constraints.dac_resolution = {'min': 8, 'max': 8, 'step': 1, 'unit': 'bit'}
+        constraints.waveform_format = ["bin8"]
+        constraints.dac_resolution = {"min": 8, "max": 8, "step": 1, "unit": "bit"}
 
-        if self._MODEL == 'M8195A':
+        if self._MODEL == "M8195A":
             constraints.sample_rate.min = 53.76e9 / self._sample_rate_div
             constraints.sample_rate.max = 65.0e9 / self._sample_rate_div
             constraints.sample_rate.step = 1.0e7
             constraints.sample_rate.default = 65.00e9 / self._sample_rate_div
         else:
-            self.log.error('The current AWG model has no valid sample rate '
-                           'constraints')
+            self.log.error(
+                "The current AWG model has no valid sample rate " "constraints"
+            )
 
         # manual 1.5.4: Depending on the Sample Rate Divider, the 256 sample wide output of the sequencer
         # is divided by 1, 2 or 4.
         constraints.waveform_length.step = 256 / self._sample_rate_div
-        constraints.waveform_length.min = 1280  # != p 108 manual, but tested manually ('MARK')
+        constraints.waveform_length.min = (
+            1280  # != p 108 manual, but tested manually ('MARK')
+        )
         constraints.waveform_length.max = int(16e9)
         constraints.waveform_length.default = 1280
 
         # analog channel
-        constraints.a_ch_amplitude.min = 0.075   # from soft frontpanel
+        constraints.a_ch_amplitude.min = 0.075  # from soft frontpanel
         constraints.a_ch_amplitude.max = 2
-        constraints.a_ch_amplitude.step = 0.0002 # not used anymore
+        constraints.a_ch_amplitude.step = 0.0002  # not used anymore
         constraints.a_ch_amplitude.default = 1
         constraints.a_ch_amplitude.default_marker = 1
 
@@ -2215,7 +2742,9 @@ class AWGM8195A(AWGM819X):
         constraints.a_ch_offset.max = 1
         constraints.a_ch_offset.min = 0
         constraints.a_ch_offset.default = 0
-        constraints.a_ch_offset.default_marker = 0.5 # default value if analog channel is used as marker
+        constraints.a_ch_offset.default_marker = (
+            0.5  # default value if analog channel is used as marker
+        )
 
         # constraints.sampled_file_length.min = 256
         # constraints.sampled_file_length.max = 2_000_000_000
@@ -2242,16 +2771,18 @@ class AWGM8195A(AWGM819X):
         # are stated, where only the generic names should be used. The names
         # for the different configurations can be customary chosen.
         activation_config = OrderedDict()
-        if self._MODEL == 'M8195A':
+        if self._MODEL == "M8195A":
             awg_mode = self.awg_mode
-            if awg_mode == 'MARK':
-                activation_config['all'] = frozenset({'a_ch1', 'd_ch1', 'd_ch2'})
-            elif awg_mode == 'SING':
-                activation_config['all'] = frozenset({'a_ch1'})
-            elif awg_mode == 'DUAL':
-                activation_config['all'] = frozenset({'a_ch1', 'a_ch2'})
-            elif awg_mode == 'FOUR':
-                activation_config['all'] = frozenset({'a_ch1', 'a_ch2', 'a_ch3', 'a_ch4'})
+            if awg_mode == "MARK":
+                activation_config["all"] = frozenset({"a_ch1", "d_ch1", "d_ch2"})
+            elif awg_mode == "SING":
+                activation_config["all"] = frozenset({"a_ch1"})
+            elif awg_mode == "DUAL":
+                activation_config["all"] = frozenset({"a_ch1", "a_ch2"})
+            elif awg_mode == "FOUR":
+                activation_config["all"] = frozenset(
+                    {"a_ch1", "a_ch2", "a_ch3", "a_ch4"}
+                )
 
         constraints.activation_config = activation_config
 
@@ -2261,51 +2792,86 @@ class AWGM8195A(AWGM819X):
 
         constr = self.get_constraints()
 
-        if self.awg_mode == 'MARK':
+        if self.awg_mode == "MARK":
 
-            a_ampl = {'a_ch1': constr.a_ch_amplitude.default} # peak to peak voltage
-            d_ampl_low = {'d_ch1': constr.d_ch_low.default, 'd_ch2': constr.d_ch_low.default}
-            d_ampl_high = {'d_ch1': constr.d_ch_high.default, 'd_ch2': constr.d_ch_high.default}
+            a_ampl = {"a_ch1": constr.a_ch_amplitude.default}  # peak to peak voltage
+            d_ampl_low = {
+                "d_ch1": constr.d_ch_low.default,
+                "d_ch2": constr.d_ch_low.default,
+            }
+            d_ampl_high = {
+                "d_ch1": constr.d_ch_high.default,
+                "d_ch2": constr.d_ch_high.default,
+            }
             a_offs = {}
 
-        elif self.awg_mode == 'FOUR':
+        elif self.awg_mode == "FOUR":
 
-            a_ampl = {'a_ch1': constr.a_ch_amplitude.default, 'a_ch2': constr.a_ch_amplitude.default,
-                      'a_ch3': constr.a_ch_amplitude.default, 'a_ch4': constr.a_ch_amplitude.default}
-            a_offs = {'a_ch1': constr.a_ch_offset.default, 'a_ch2': constr.a_ch_offset.default_marker,
-                      'a_ch3': constr.a_ch_offset.default_marker, 'a_ch4': constr.a_ch_offset.default_marker}
+            a_ampl = {
+                "a_ch1": constr.a_ch_amplitude.default,
+                "a_ch2": constr.a_ch_amplitude.default,
+                "a_ch3": constr.a_ch_amplitude.default,
+                "a_ch4": constr.a_ch_amplitude.default,
+            }
+            a_offs = {
+                "a_ch1": constr.a_ch_offset.default,
+                "a_ch2": constr.a_ch_offset.default_marker,
+                "a_ch3": constr.a_ch_offset.default_marker,
+                "a_ch4": constr.a_ch_offset.default_marker,
+            }
             d_ampl_low = {}
             d_ampl_high = {}
 
         else:
-            self.log.error('The chosen AWG ({0}) mode is not implemented yet!'.format(self.awg_mode))
+            self.log.error(
+                "The chosen AWG ({0}) mode is not implemented yet!".format(
+                    self.awg_mode
+                )
+            )
 
         d_ampl_low, d_ampl_high = self._output_levels_by_config(d_ampl_low, d_ampl_high)
 
-        return {'a_ampl': a_ampl, 'a_offs': a_offs,
-                'd_ampl_low': d_ampl_low, 'd_ampl_high': d_ampl_high}
+        return {
+            "a_ampl": a_ampl,
+            "a_offs": a_offs,
+            "d_ampl_low": d_ampl_low,
+            "d_ampl_high": d_ampl_high,
+        }
 
     def _set_awg_mode(self):
         # set only on init by config option, not during runtime
 
         awg_mode = self.awg_mode_cfg
-        self.write(':INSTrument:DACMode {0}'.format(awg_mode))
+        self.write(":INSTrument:DACMode {0}".format(awg_mode))
 
         # see manual 1.5.5
-        if awg_mode == 'MARK' or awg_mode == 'SING' or awg_mode == 'DUAL' or awg_mode == 'FOUR':
-            self.write_all_ch(':TRAC{}:MMOD EXT')
+        if (
+            awg_mode == "MARK"
+            or awg_mode == "SING"
+            or awg_mode == "DUAL"
+            or awg_mode == "FOUR"
+        ):
+            self.write_all_ch(":TRAC{}:MMOD EXT")
         else:
             raise ValueError("Unknown mode: {}".format(awg_mode))
 
-        if awg_mode != 'MARK':
-            self.log.error("Setting awg mode {} that is currently not supported! "
-                           "Be careful and please report bugs and bug fixes back on github.".format(awg_mode))
+        if awg_mode != "MARK":
+            self.log.error(
+                "Setting awg mode {} that is currently not supported! "
+                "Be careful and please report bugs and bug fixes back on github.".format(
+                    awg_mode
+                )
+            )
 
         if self.awg_mode != awg_mode:
-            self.log.error("Setting awg mode failed, is still: {}".format(self.awg_mode))
+            self.log.error(
+                "Setting awg mode failed, is still: {}".format(self.awg_mode)
+            )
 
     def _set_sample_rate_div(self):
-        self.write(':INST:MEM:EXT:RDIV DIV{0}'.format(self._sample_rate_div))  # TODO dependent on DACMode
+        self.write(
+            ":INST:MEM:EXT:RDIV DIV{0}".format(self._sample_rate_div)
+        )  # TODO dependent on DACMode
 
     def _write_output_on(self):
         self.write_all_ch("OUTP{} ON")
@@ -2313,16 +2879,19 @@ class AWGM8195A(AWGM819X):
     def _compile_bin_samples(self, analog_samples, digital_samples, ch_str):
 
         interleaved = self.interleaved_wavefile
-        self.log.debug("Compiling samples for {}, interleaved: {}".format(ch_str, interleaved))
+        self.log.debug(
+            "Compiling samples for {}, interleaved: {}".format(ch_str, interleaved)
+        )
 
         a_samples = self.float_to_sample(analog_samples[ch_str])
 
-        if interleaved and ch_str == 'a_ch1':
-            d_samples = self.bool_to_sample(digital_samples['d_ch1'], digital_samples['d_ch2'],
-                                            int_type_str='int8')
+        if interleaved and ch_str == "a_ch1":
+            d_samples = self.bool_to_sample(
+                digital_samples["d_ch1"], digital_samples["d_ch2"], int_type_str="int8"
+            )
             # the analog and digital samples are stored in the following format: a1, d1, a2, d2, a3, d3, ...
             comb_samples = np.zeros(2 * a_samples.size, dtype=np.int8)
-            comb_samples[::2] =  a_samples
+            comb_samples[::2] = a_samples
             comb_samples[1::2] = d_samples
 
         else:
@@ -2332,23 +2901,32 @@ class AWGM8195A(AWGM819X):
 
     def _get_digital_ch_cmd(self, digital_ch_name):
         d_ch_internal = self._digital_ch_2_internal(digital_ch_name)
-        return ':VOLT{0:d}'.format(d_ch_internal)
+        return ":VOLT{0:d}".format(d_ch_internal)
 
     def get_active_channels(self, ch=None):
-        """ Get the active channels of the pulse generator hardware.
+        """
+        Get the active channels of the pulse generator hardware.
 
-        @param list ch: optional, if specific analog or digital channels are needed to be asked
-                        without obtaining all the channels.
+        Parameters
+        ----------
+        ch : list, optional
+            If specific analog or digital channels are needed without obtaining all the channels,
+            provide a list of the channel names (i.e. ['a_ch2', 'd_ch2', 'a_ch1', 'd_ch5', 'd_ch1']).
 
-        @return dict:  where keys denoting the channel string and items boolean expressions whether
-                       channel are active or not.
+        Returns
+        -------
+        dict
+            Dictionary where keys denote the channel strings and items are boolean values indicating
+            whether the channels are active (True) or not (False).
 
-        Example for an possible input (order is not important):
+        Examples
+        --------
+        If the input is:
             ch = ['a_ch2', 'd_ch2', 'a_ch1', 'd_ch5', 'd_ch1']
-        then the output might look like
+        The output might look like:
             {'a_ch2': True, 'd_ch2': False, 'a_ch1': False, 'd_ch5': True, 'd_ch1': False}
 
-        If no parameter (or None) is passed to this method all channel states will be returned.
+        If no parameter (or None) is passed, all channel states will be returned.
         """
 
         if ch is None:
@@ -2356,37 +2934,41 @@ class AWGM8195A(AWGM819X):
 
         active_ch = dict()
 
-        if ch ==[]:
+        if ch == []:
 
             # because 0 = False and 1 = True
             awg_mode = self.awg_mode
 
-            if awg_mode == 'MARK':
-                active_ch['a_ch1'] = bool(int(self.query(':OUTP1?')))
-                active_ch['d_ch1'] = bool(int(self.query(':OUTP3?')))
-                active_ch['d_ch2'] = bool(int(self.query(':OUTP4?')))
-            elif awg_mode == 'SING':
-                active_ch['a_ch1'] = bool(int(self.query(':OUTP1?')))
-            elif awg_mode == 'DUAL':
-                active_ch['a_ch1'] = bool(int(self.query(':OUTP1?')))
-                active_ch['a_ch4'] = bool(int(self.query(':OUTP4?')))
-            elif awg_mode == 'FOUR':
-                active_ch['a_ch1'] = bool(int(self.query(':OUTP1?')))
-                active_ch['a_ch2'] = bool(int(self.query(':OUTP2?')))
-                active_ch['a_ch3'] = bool(int(self.query(':OUTP3?')))
-                active_ch['a_ch4'] = bool(int(self.query(':OUTP4?')))
+            if awg_mode == "MARK":
+                active_ch["a_ch1"] = bool(int(self.query(":OUTP1?")))
+                active_ch["d_ch1"] = bool(int(self.query(":OUTP3?")))
+                active_ch["d_ch2"] = bool(int(self.query(":OUTP4?")))
+            elif awg_mode == "SING":
+                active_ch["a_ch1"] = bool(int(self.query(":OUTP1?")))
+            elif awg_mode == "DUAL":
+                active_ch["a_ch1"] = bool(int(self.query(":OUTP1?")))
+                active_ch["a_ch4"] = bool(int(self.query(":OUTP4?")))
+            elif awg_mode == "FOUR":
+                active_ch["a_ch1"] = bool(int(self.query(":OUTP1?")))
+                active_ch["a_ch2"] = bool(int(self.query(":OUTP2?")))
+                active_ch["a_ch3"] = bool(int(self.query(":OUTP3?")))
+                active_ch["a_ch4"] = bool(int(self.query(":OUTP4?")))
 
         else:
 
             for channel in ch:
-                if 'a_ch' in channel:
+                if "a_ch" in channel:
                     ana_chan = int(channel[4:])
-                    active_ch[channel] = bool(int(self.ask(':OUTP{0}?'.format(ana_chan))))
+                    active_ch[channel] = bool(
+                        int(self.ask(":OUTP{0}?".format(ana_chan)))
+                    )
 
-                elif 'd_ch'in channel:
-                    self.log.warning('Digital channel "{0}" cannot be '
-                                     'activated! Command ignored.'
-                                     ''.format(channel))
+                elif "d_ch" in channel:
+                    self.log.warning(
+                        'Digital channel "{0}" cannot be '
+                        "activated! Command ignored."
+                        "".format(channel)
+                    )
                     active_ch[channel] = False
 
         return active_ch
@@ -2401,23 +2983,23 @@ class AWGM8195A(AWGM819X):
             ach_num = self.chstr_2_chnum(a_ch)
             # (de)activate the analog channel
             if new_channels_state[a_ch]:
-                self.write('OUTP{0:d} ON'.format(ach_num))
+                self.write("OUTP{0:d} ON".format(ach_num))
             else:
-                self.write('OUTP{0:d} OFF'.format(ach_num))
+                self.write("OUTP{0:d} OFF".format(ach_num))
 
         for d_ch in digital_channels:
             dch_num = self.chstr_2_chnum(d_ch)
             # (de)activate the digital channel
             if new_channels_state[d_ch]:
-                self.write('OUTP{0:d} ON'.format(dch_num))
+                self.write("OUTP{0:d} ON".format(dch_num))
             else:
-                self.write('OUTP{0:d} OFF'.format(dch_num))
+                self.write("OUTP{0:d} OFF".format(dch_num))
 
     def float_to_sample(self, val):
 
         val_int = self._float_to_int(val, self._dac_resolution)
 
-        return val_int.astype('int8')
+        return val_int.astype("int8")
 
     def _define_new_sequence(self, name, num_steps):
         # no storage system for sequences on 8195a
@@ -2430,11 +3012,11 @@ class AWGM8195A(AWGM819X):
     def _get_loaded_seq_catalogue(self, ch_num):
 
         if not self._sequence_names:
-            return '0, 0'  # signals no sequence loaded
+            return "0, 0"  # signals no sequence loaded
 
         # mimic awg8190 format 'sequence_id, length in segments'
         # we don't need the length here, so dummy value
-        return '0, -1'
+        return "0, -1"
 
     def _get_loaded_seq_name(self, ch_num, idx):
 
@@ -2448,18 +3030,20 @@ class AWGM8195A(AWGM819X):
         index = idx_step
         num_steps = len(sequence_parameters)
 
-        if self.awg_mode == 'MARK':
-            control = 2 ** 24  # set marker
-        elif self.awg_mode == 'FOUR':
+        if self.awg_mode == "MARK":
+            control = 2**24  # set marker
+        elif self.awg_mode == "FOUR":
             control = 0
         else:
-            self.log.error("The AWG mode '{0}' is not implemented yet!".format(self.awg_mode))
+            self.log.error(
+                "The AWG mode '{0}' is not implemented yet!".format(self.awg_mode)
+            )
             return
 
         if index == 0:
-            control += 2 ** 28  # set start sequence
+            control += 2**28  # set start sequence
         if index + 1 == num_steps:
-            control += 2 ** 30  # set end sequence
+            control += 2**30  # set end sequence
 
         return control
 
@@ -2471,7 +3055,7 @@ class AWGM8195A(AWGM819X):
 
 
 class AWGM8190A(AWGM819X):
-    """ A hardware module for the Keysight M8190A series for generating
+    """A hardware module for the Keysight M8190A series for generating
         waveforms and sequences thereof.
 
     Example config for copy-paste:
@@ -2487,17 +3071,28 @@ class AWGM8190A(AWGM819X):
                 dac_resolution_bits: 14
     """
 
-    _dac_amp_mode = 'direct'    # see manual 1.2 'options'
-    _wave_mem_mode = ConfigOption(name='waveform_memory_mode', default='pc_hdd', missing='nothing')
-    _wave_file_extension = '.bin'
-    _wave_transfer_datatype = 'h'
+    _dac_amp_mode = "direct"  # see manual 1.2 'options'
+    _wave_mem_mode = ConfigOption(
+        name="waveform_memory_mode", default="pc_hdd", missing="nothing"
+    )
+    _wave_file_extension = ".bin"
+    _wave_transfer_datatype = "h"
 
-    _dac_resolution = ConfigOption(name='dac_resolution_bits', default='14',
-                                   missing='warn')  # 8190 supports 12 (speed) or 14 (precision)
+    _dac_resolution = ConfigOption(
+        name="dac_resolution_bits", default="14", missing="warn"
+    )  # 8190 supports 12 (speed) or 14 (precision)
 
     # physical output channel mapping
-    ch_map = {'d_ch1': 'MARK1:SAMP', 'd_ch2': 'MARK2:SAMP', 'd_ch3': 'MARK1:SYNC', 'd_ch4': 'MARK2:SYNC'}
-    ch_map_a2d = {'a_ch1': ['d_ch1', 'd_ch3'], 'a_ch2': ['d_ch2', 'd_ch4']}     # corresponding marker channels
+    ch_map = {
+        "d_ch1": "MARK1:SAMP",
+        "d_ch2": "MARK2:SAMP",
+        "d_ch3": "MARK1:SYNC",
+        "d_ch4": "MARK2:SYNC",
+    }
+    ch_map_a2d = {
+        "a_ch1": ["d_ch1", "d_ch3"],
+        "a_ch2": ["d_ch2", "d_ch4"],
+    }  # corresponding marker channels
 
     @property
     def n_ch(self):
@@ -2543,14 +3138,15 @@ class AWGM8190A(AWGM819X):
         constraints = PulserConstraints()
 
         # The compatible file formats are hardware specific.
-        constraints.waveform_format = ['bin']
-        constraints.dac_resolution = {'min': 12, 'max': 14, 'step': 2,
-                                      'unit': 'bit'}
+        constraints.waveform_format = ["bin"]
+        constraints.dac_resolution = {"min": 12, "max": 14, "step": 2, "unit": "bit"}
 
-        if self._MODEL != 'M8190A':
-            self.log.error('This driver is for Keysight M8190A only, but detected: {}'.format(
-                self._MODEL
-            ))
+        if self._MODEL != "M8190A":
+            self.log.error(
+                "This driver is for Keysight M8190A only, but detected: {}".format(
+                    self._MODEL
+                )
+            )
 
         if self._dac_resolution == 12:
             constraints.sample_rate.min = 125e6 / self._sample_rate_div
@@ -2563,7 +3159,9 @@ class AWGM8190A(AWGM819X):
             constraints.sample_rate.step = 1.0e7
             constraints.sample_rate.default = 8e9 / self._sample_rate_div
         else:
-            raise ValueError("Unsupported DAC resolution: {}".format(self._dac_resolution))
+            raise ValueError(
+                "Unsupported DAC resolution: {}".format(self._dac_resolution)
+            )
 
         # manual 8.22.3 Waveform Granularity and Size
         if self._dac_resolution == 12:
@@ -2577,7 +3175,7 @@ class AWGM8190A(AWGM819X):
 
         constraints.waveform_length.max = 2147483648  # assumes option -02G
 
-        constraints.a_ch_amplitude.min = 0.1    # from soft frontpanel, single ended min
+        constraints.a_ch_amplitude.min = 0.1  # from soft frontpanel, single ended min
         constraints.a_ch_amplitude.max = 0.700  # single ended max
         if self._dac_resolution == 12:
             # 0.7Vpp/2^12=0.0019; for DAC resolution of 12 bits (data sheet p. 17)
@@ -2597,11 +3195,11 @@ class AWGM8190A(AWGM819X):
         constraints.d_ch_high.default = 1.5
 
         constraints.waveform_num.min = 1
-        constraints.waveform_num.max = 524287 # manual p. 261
+        constraints.waveform_num.max = 524287  # manual p. 261
         constraints.waveform_num.default = 1
 
         constraints.sequence_num.min = 1
-        constraints.sequence_num.max = 524288 - 1   # manual p. 251
+        constraints.sequence_num.max = 524288 - 1  # manual p. 251
         constraints.sequence_num.step = 1
         constraints.sequence_num.default = 1
 
@@ -2621,16 +3219,20 @@ class AWGM8190A(AWGM819X):
 
         activation_config = OrderedDict()
 
-        if self._MODEL == 'M8190A':
+        if self._MODEL == "M8190A":
             # all allowed configs
             # digital channels belong to analogue counterparts
-            activation_config['all'] = {'a_ch1', 'a_ch2',
-                                        'd_ch1', 'd_ch2', 'd_ch3', 'd_ch4'}
+            activation_config["all"] = {
+                "a_ch1",
+                "a_ch2",
+                "d_ch1",
+                "d_ch2",
+                "d_ch3",
+                "d_ch4",
+            }
             # sample marker are more accurate than sync markers -> lower d_ch numbers
-            activation_config['ch1_2mrk'] = {'a_ch1',
-                                             'd_ch1', 'd_ch3'}
-            activation_config['ch2_2mrk'] = {'a_ch2',
-                                             'd_ch2', 'd_ch4'}
+            activation_config["ch1_2mrk"] = {"a_ch1", "d_ch1", "d_ch3"}
+            activation_config["ch2_2mrk"] = {"a_ch2", "d_ch2", "d_ch4"}
 
         constraints.activation_config = activation_config
 
@@ -2640,36 +3242,54 @@ class AWGM8190A(AWGM819X):
 
         constr = self.get_constraints()
 
-        a_ampl = {'a_ch1': constr.a_ch_amplitude.default, 'a_ch2': constr.a_ch_amplitude.default}
+        a_ampl = {
+            "a_ch1": constr.a_ch_amplitude.default,
+            "a_ch2": constr.a_ch_amplitude.default,
+        }
 
-        d_ampl_low = {'d_ch1': constr.d_ch_low.default, 'd_ch2': constr.d_ch_low.default,
-                      'd_ch3': constr.d_ch_low.default, 'd_ch4': constr.d_ch_low.default}
-        d_ampl_high = {'d_ch1': constr.d_ch_high.default, 'd_ch2': constr.d_ch_high.default,
-                       'd_ch3': constr.d_ch_high.default, 'd_ch4': constr.d_ch_high.default}
+        d_ampl_low = {
+            "d_ch1": constr.d_ch_low.default,
+            "d_ch2": constr.d_ch_low.default,
+            "d_ch3": constr.d_ch_low.default,
+            "d_ch4": constr.d_ch_low.default,
+        }
+        d_ampl_high = {
+            "d_ch1": constr.d_ch_high.default,
+            "d_ch2": constr.d_ch_high.default,
+            "d_ch3": constr.d_ch_high.default,
+            "d_ch4": constr.d_ch_high.default,
+        }
         d_ampl_low, d_ampl_high = self._output_levels_by_config(d_ampl_low, d_ampl_high)
 
         a_offs = {}
 
-        return {'a_ampl': a_ampl, 'a_offs': a_offs,
-                'd_ampl_low': d_ampl_low, 'd_ampl_high': d_ampl_high}
+        return {
+            "a_ampl": a_ampl,
+            "a_offs": a_offs,
+            "d_ampl_low": d_ampl_low,
+            "d_ampl_high": d_ampl_high,
+        }
 
     def _set_dac_resolution(self):
         if self._dac_resolution == 12:
-            self.write(':TRAC1:DWID WSP')
-            self.write(':TRAC2:DWID WSP')
+            self.write(":TRAC1:DWID WSP")
+            self.write(":TRAC2:DWID WSP")
         elif self._dac_resolution == 14:
-            self.write(':TRAC1:DWID WPR')
-            self.write(':TRAC2:DWID WPR')
+            self.write(":TRAC1:DWID WPR")
+            self.write(":TRAC2:DWID WPR")
         else:
-            self.log.error("Unsupported DAC resolution: {}.".format(self._dac_resolution))
+            self.log.error(
+                "Unsupported DAC resolution: {}.".format(self._dac_resolution)
+            )
 
     def _set_dac_amplifier_mode(self):
         # todo: implement choosing amp mode
-        if self._dac_amp_mode != 'direct':
-            raise NotImplementedError("Non direct output '{}' not yet implemented."
-                                      .format(self._dac_amp_mode))
-        self.write(':OUTP1:ROUT DAC')
-        self.write(':OUTP2:ROUT DAC')
+        if self._dac_amp_mode != "direct":
+            raise NotImplementedError(
+                "Non direct output '{}' not yet implemented.".format(self._dac_amp_mode)
+            )
+        self.write(":OUTP1:ROUT DAC")
+        self.write(":OUTP2:ROUT DAC")
 
     def _write_output_on(self):
         self.write_all_ch("OUTP{}:NORM ON")
@@ -2679,9 +3299,15 @@ class AWGM8190A(AWGM819X):
         marker = self.marker_on
 
         a_samples = self.float_to_sample(analog_samples[ch_num])
-        marker_sample = digital_samples[self._analogue_ch_corresponding_digital_chs(ch_num)[0]]
-        marker_sync = digital_samples[self._analogue_ch_corresponding_digital_chs(ch_num)[1]]
-        d_samples = self.bool_to_sample(marker_sample, marker_sync, int_type_str='int16')
+        marker_sample = digital_samples[
+            self._analogue_ch_corresponding_digital_chs(ch_num)[0]
+        ]
+        marker_sync = digital_samples[
+            self._analogue_ch_corresponding_digital_chs(ch_num)[1]
+        ]
+        d_samples = self.bool_to_sample(
+            marker_sample, marker_sync, int_type_str="int16"
+        )
         if marker:
             comb_samples = a_samples + d_samples
         else:
@@ -2691,23 +3317,32 @@ class AWGM8190A(AWGM819X):
 
     def _get_digital_ch_cmd(self, digital_ch_name):
         d_ch_internal = self._digital_ch_2_internal(digital_ch_name)
-        return ':{}:VOLT'.format(d_ch_internal)
+        return ":{}:VOLT".format(d_ch_internal)
 
     def get_active_channels(self, ch=None):
-        """ Get the active channels of the pulse generator hardware.
+        """
+        Get the active channels of the pulse generator hardware.
 
-        @param list ch: optional, if specific analog or digital channels are needed to be asked
-                        without obtaining all the channels.
+        Parameters
+        ----------
+        ch : list, optional
+            A list of specific analog or digital channels to retrieve their states without
+            obtaining all channels. If not provided, all channel states will be returned.
 
-        @return dict:  where keys denoting the channel string and items boolean expressions whether
-                       channel are active or not.
+        Returns
+        -------
+        dict
+            Dictionary where the keys represent channel strings (i.e., 'a_ch2', 'd_ch1')
+            and the values are boolean, indicating whether the channels are active (True) or inactive (False).
 
-        Example for an possible input (order is not important):
+        Examples
+        --------
+        For an input:
             ch = ['a_ch2', 'd_ch2', 'a_ch1', 'd_ch5', 'd_ch1']
-        then the output might look like
+        The output might be:
             {'a_ch2': True, 'd_ch2': False, 'a_ch1': False, 'd_ch5': True, 'd_ch1': False}
 
-        If no parameter (or None) is passed to this method all channel states will be returned.
+        If no parameter (or None) is passed, all channel states will be returned.
         """
 
         if ch is None:
@@ -2716,23 +3351,35 @@ class AWGM8190A(AWGM819X):
         active_ch = dict()
 
         if ch == []:
-            active_ch['a_ch1'] = bool(int(self.query(':OUTP1:NORM?')))
-            active_ch['a_ch2'] = bool(int(self.query(':OUTP2:NORM?')))
+            active_ch["a_ch1"] = bool(int(self.query(":OUTP1:NORM?")))
+            active_ch["a_ch2"] = bool(int(self.query(":OUTP2:NORM?")))
 
             # marker channels are active if corresponding analogue channel on
-            active_ch['d_ch1'] = active_ch[self._digital_ch_corresponding_analogue_ch('d_ch1')]
-            active_ch['d_ch2'] = active_ch[self._digital_ch_corresponding_analogue_ch('d_ch2')]
-            active_ch['d_ch3'] = active_ch[self._digital_ch_corresponding_analogue_ch('d_ch3')]
-            active_ch['d_ch4'] = active_ch[self._digital_ch_corresponding_analogue_ch('d_ch4')]
+            active_ch["d_ch1"] = active_ch[
+                self._digital_ch_corresponding_analogue_ch("d_ch1")
+            ]
+            active_ch["d_ch2"] = active_ch[
+                self._digital_ch_corresponding_analogue_ch("d_ch2")
+            ]
+            active_ch["d_ch3"] = active_ch[
+                self._digital_ch_corresponding_analogue_ch("d_ch3")
+            ]
+            active_ch["d_ch4"] = active_ch[
+                self._digital_ch_corresponding_analogue_ch("d_ch4")
+            ]
 
         else:
             for channel in ch:
-                if 'a_ch' in channel:
+                if "a_ch" in channel:
                     ana_chan = int(channel[4:])
-                    active_ch[channel] = bool(int(self.ask(':OUTP{0}:NORM?'.format(ana_chan))))
+                    active_ch[channel] = bool(
+                        int(self.ask(":OUTP{0}:NORM?".format(ana_chan)))
+                    )
 
-                elif 'd_ch' in channel:
-                    active_ch[channel] = active_ch[self._digital_ch_corresponding_analogue_ch(channel)]
+                elif "d_ch" in channel:
+                    active_ch[channel] = active_ch[
+                        self._digital_ch_corresponding_analogue_ch(channel)
+                    ]
 
         return active_ch
 
@@ -2746,7 +3393,7 @@ class AWGM8190A(AWGM819X):
         # awg 8190: no own channels, digital channels belong to analogue ones
         # iterate digital channels and activate if corresponding analogue is on
         for chnl in current_channel_state.copy():
-            if chnl.startswith('d_'):
+            if chnl.startswith("d_"):
                 if new_channels_state[self._digital_ch_corresponding_analogue_ch(chnl)]:
                     new_channels_state[chnl] = True
                 else:
@@ -2758,20 +3405,22 @@ class AWGM8190A(AWGM819X):
             ach_num = self.chstr_2_chnum(a_ch)
             # (de)activate the analog channel
             if new_channels_state[a_ch]:
-                self.write('OUTP{0:d}:NORM ON'.format(ach_num))
+                self.write("OUTP{0:d}:NORM ON".format(ach_num))
             else:
-                self.write('OUTP{0:d}:NORM OFF'.format(ach_num))
+                self.write("OUTP{0:d}:NORM OFF".format(ach_num))
 
     def float_to_sample(self, val):
 
         val_int = self._float_to_int(val, self._dac_resolution)
-        shiftbits = 16 - self._dac_resolution  # 2 for marker, dac: 12 -> 2, dac: 14 -> 4
+        shiftbits = (
+            16 - self._dac_resolution
+        )  # 2 for marker, dac: 12 -> 2, dac: 14 -> 4
 
-        return val_int.astype('int16') << shiftbits
+        return val_int.astype("int16") << shiftbits
 
     def _delete_all_sequences(self):
 
-        self.write_all_ch(':SEQ{}:DEL:ALL')
+        self.write_all_ch(":SEQ{}:DEL:ALL")
 
     def _define_new_sequence(self, name, n_steps):
 
@@ -2783,7 +3432,7 @@ class AWGM8190A(AWGM819X):
         self.write(":SEQ2:NAME {:d}, '{}'".format(seq_id_ch2, name))
 
     def _get_loaded_seq_catalogue(self, ch_num):
-        return self.query(':SEQ{:d}:CAT?'.format(ch_num))
+        return self.query(":SEQ{:d}:CAT?".format(ch_num))
 
     def _get_loaded_seq_name(self, ch_num, idx):
         """
@@ -2791,8 +3440,8 @@ class AWGM8190A(AWGM819X):
         :param idx: 0,1,2. Not the sequenceId = seqtable id of first element in sequence
         :return:
         """
-        seq_id = self.get_loaded_assets_id(ch_num, 'sequence')[idx]
-        return self.query(':SEQ{:d}:NAME? {:d}'.format(ch_num, seq_id))
+        seq_id = self.get_loaded_assets_id(ch_num, "sequence")[idx]
+        return self.query(":SEQ{:d}:NAME? {:d}".format(ch_num, seq_id))
 
     def _get_sequence_control_bin(self, sequence_parameters, idx_step):
 
@@ -2814,13 +3463,12 @@ class AWGM8190A(AWGM819X):
 
         # in use case with external pattern jump, every segment with an address
         # defines a "sequence" (as defined in Keysight manual)
-        if 'pattern_jump_address' in seq_step:
+        if "pattern_jump_address" in seq_step:
             control = 0x1 << 28
         if next_step:
-            if 'pattern_jump_address' in next_step:
+            if "pattern_jump_address" in next_step:
                 control = 0x1 << 30
 
         control += 0x1 << 24  # always enable markers
 
         return control
-

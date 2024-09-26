@@ -677,8 +677,6 @@ class PulsedMeasurementGui(GuiBase):
     def pulser_running_updated(self, is_running):
         """
 
-        @param is_running:
-        @return:
         """
         # block signals
         self._mw.pulser_on_off_PushButton.blockSignals(True)
@@ -732,10 +730,15 @@ class PulsedMeasurementGui(GuiBase):
 
     @QtCore.Slot(bool)
     def measurement_run_stop_clicked(self, isChecked):
-        """ Manages what happens if pulsed measurement is started or stopped.
-
-        @param bool isChecked: start scan if that is possible
         """
+Manages what happens if pulsed measurement is started or stopped.
+
+Parameters
+----------
+isChecked : bool
+    Start scan if that is possible.
+"""
+
         self.pulsedmasterlogic().toggle_pulsed_measurement(isChecked)
         return
 
@@ -749,9 +752,7 @@ class PulsedMeasurementGui(GuiBase):
     def measurement_status_updated(self, is_running, is_paused):
         """
 
-        @param is_running:
-        @param is_paused:
-        @return:
+     
         """
         # block signals
         self._mw.action_run_stop.blockSignals(True)
@@ -899,10 +900,7 @@ class PulsedMeasurementGui(GuiBase):
         """
         Refreshes the elapsed time and sweeps of the measurement.
 
-        @param float elapsed_time:
-        @param int elapsed_sweeps:
-        @param float timer_interval:
-        @return:
+    
         """
         time_str = str(datetime.timedelta(seconds=elapsed_time)).rsplit('.', 1)[0]
         # block signals
@@ -1437,8 +1435,6 @@ class PulsedMeasurementGui(GuiBase):
     def pulse_generator_settings_updated(self, settings_dict):
         """
 
-        @param settings_dict
-        @return:
         """
         # block signals
         self._pgs.gen_sample_freq_DSpinBox.blockSignals(True)
@@ -1629,8 +1625,6 @@ class PulsedMeasurementGui(GuiBase):
     def generation_parameters_updated(self, settings_dict):
         """
 
-        @param settings_dict:
-        @return:
         """
         # block signals
         self._pg.gen_laserchannel_ComboBox.blockSignals(True)
@@ -1874,8 +1868,6 @@ class PulsedMeasurementGui(GuiBase):
     def update_block_dict(self, block_dict):
         """
 
-        @param block_dict:
-        @return:
         """
         block_names = natural_sort(block_dict)
         # Check if a block has been added. In that case set the current index to the new one.
@@ -1903,8 +1895,6 @@ class PulsedMeasurementGui(GuiBase):
     def update_ensemble_dict(self, ensemble_dict):
         """
 
-        @param ensemble_dict:
-        @return:
         """
         ensemble_names = natural_sort(ensemble_dict)
         # Check if an ensemble has been added. In that case set the current index to the new one.
@@ -2019,8 +2009,6 @@ class PulsedMeasurementGui(GuiBase):
     def generate_predefined_clicked(self, method_name, sample_and_load=False):
         """
 
-        @param str method_name:
-        @param bool sample_and_load:
         """
         # get parameters from input widgets
         # Store parameters together with the parameter names in a dictionary
@@ -2077,7 +2065,6 @@ class PulsedMeasurementGui(GuiBase):
     def waveform_list_updated(self, waveform_list):
         """
 
-        @param list waveform_list:
         """
         # TODO: This method will be needed later on to implement an upload center
         pass
@@ -2198,8 +2185,6 @@ class PulsedMeasurementGui(GuiBase):
     def update_sequence_dict(self, sequence_dict):
         """
 
-        @param sequence_dict:
-        @return:
         """
         sequence_names = natural_sort(sequence_dict)
         # Check if a sequence has been added. In that case set the current index to the new one.
@@ -2289,7 +2274,6 @@ class PulsedMeasurementGui(GuiBase):
     def sequence_list_updated(self, sequence_list):
         """
 
-        @param list sequence_list:
         """
         # TODO: This method will be needed later on to implement an upload center
         pass
@@ -2496,10 +2480,6 @@ class PulsedMeasurementGui(GuiBase):
     def fit_data_updated(self, fit_config, result, use_alternative_data):
         """
 
-        @param str fit_config:
-        @param object result:
-        @param bool use_alternative_data:
-        @return:
         """
 
         # Update plot.
@@ -2558,7 +2538,6 @@ class PulsedMeasurementGui(GuiBase):
     def microwave_settings_updated(self, settings_dict):
         """
 
-        @param dict settings_dict:
         """
         # block signals
         self._pa.ext_control_mw_freq_DoubleSpinBox.blockSignals(True)
@@ -2584,8 +2563,6 @@ class PulsedMeasurementGui(GuiBase):
     def toggle_microwave_settings_editor(self, show_editor):
         """
 
-        @param show_editor:
-        @return:
         """
         if show_editor:
             self._pa.ext_control_mw_freq_Label.setVisible(True)
@@ -2629,7 +2606,6 @@ class PulsedMeasurementGui(GuiBase):
     def fast_counter_settings_updated(self, settings_dict):
         """
 
-        @param dict settings_dict:
         """
         # block signals
         self._pa.ana_param_record_length_DoubleSpinBox.blockSignals(True)
@@ -2687,7 +2663,6 @@ class PulsedMeasurementGui(GuiBase):
     def measurement_settings_updated(self, settings_dict):
         """
 
-        @param dict settings_dict:
         """
         # block signals
         self._pa.ana_param_ignore_first_CheckBox.blockSignals(True)
@@ -2776,8 +2751,6 @@ class PulsedMeasurementGui(GuiBase):
     def set_plot_dimensions(self):
         """
 
-        @param alternating:
-        @return:
         """
         number_of_signals = self.pulsedmasterlogic().signal_data.shape[0] - 1
         number_of_alt_signals = self.pulsedmasterlogic().signal_alt_data.shape[0] - 1
@@ -2983,10 +2956,18 @@ class PulsedMeasurementGui(GuiBase):
     @QtCore.Slot(dict)
     def extraction_settings_updated(self, settings_dict):
         """
+Updates settings based on the provided dictionary.
 
-        @param dict settings_dict: dictionary with parameters to update
-        @return:
-        """
+Parameters
+----------
+settings_dict : dict
+    Dictionary with parameters to update.
+
+Returns
+-------
+None
+"""
+
         # If no widgets have been generated yet, generate them now.
         if self._extraction_param_widgets is None:
             self._create_extraction_param_widgets(extraction_settings=settings_dict)
@@ -3044,8 +3025,7 @@ class PulsedMeasurementGui(GuiBase):
     def _create_extraction_param_widgets(self, extraction_settings):
         """
 
-        @param extraction_settings:
-        @return:
+       
         """
         self._extraction_param_widgets = list()
         layout_row = 1
@@ -3128,10 +3108,17 @@ class PulsedMeasurementGui(GuiBase):
     @QtCore.Slot(dict)
     def analysis_settings_updated(self, settings_dict):
         """
+Update settings based on the provided dictionary.
 
-        @param dict settings_dict: dictionary with parameters to update
-        @return:
-        """
+Parameters
+----------
+settings_dict : dict
+    Dictionary with parameters to update.
+
+Returns
+-------
+None
+"""
 
         # block signals
         self._pe.extract_param_analysis_method_comboBox.blockSignals(True)

@@ -212,11 +212,17 @@ class ScanningProbeDummyBare(ScanningProbeInterface):
 
     def configure_scan(self, scan_settings):
         """
+Parameters
+----------
+scan_settings : dict
+    The scan settings.
 
-        @param dict scan_settings:
+Returns
+-------
+dict
+    All actually set scan settings.
+"""
 
-        @return dict: ALL actually set scan settings
-        """
         with self._thread_lock:
             self.log.debug('Scanning probe dummy "configure_scan" called.')
             # Sanity checking

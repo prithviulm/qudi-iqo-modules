@@ -71,17 +71,27 @@ class SimpleLaserDummy(SimpleLaserInterface):
         return self.power_setpoint * random.gauss(1, 0.01)
 
     def get_power_setpoint(self):
-        """ Return optical power setpoint.
-
-        @return float: power setpoint in watts
         """
+Return optical power setpoint.
+
+Returns
+-------
+float
+    Power setpoint in watts.
+"""
+
         return self.power_setpoint
 
     def set_power(self, power):
-        """ Set power setpoint.
-
-        @param float power: power to set
         """
+Set power setpoint.
+
+Parameters
+----------
+power : float
+    Power to set in watts.
+"""
+
         self.power_setpoint = power
         self.current_setpoint = math.sqrt(4*self.power_setpoint)*100
 
@@ -107,17 +117,27 @@ class SimpleLaserDummy(SimpleLaserInterface):
         return self.current_setpoint * random.gauss(1, 0.05)
 
     def get_current_setpoint(self):
-        """ Get laser current setpoint
-
-        @return float: laser current setpoint
         """
+Get laser current setpoint.
+
+Returns
+-------
+float
+    The laser current setpoint.
+"""
+
         return self.current_setpoint
 
     def set_current(self, current):
-        """ Set laser current setpoint
-
-        @param float current: desired laser current setpoint
         """
+Set laser current setpoint.
+
+Parameters
+----------
+current : float
+    Desired laser current setpoint.
+"""
+
         self.current_setpoint = current
         self.power_setpoint = math.pow(self.current_setpoint/100, 2) / 4
 
@@ -136,10 +156,15 @@ class SimpleLaserDummy(SimpleLaserInterface):
         return self.mode
 
     def set_control_mode(self, control_mode):
-        """ Set the active control mode
-
-        @param ControlMode control_mode: desired control mode enum
         """
+Set the active control mode.
+
+Parameters
+----------
+control_mode : ControlMode
+    Desired control mode enum.
+"""
+
         self.mode = control_mode
 
     def on(self):
@@ -168,10 +193,15 @@ class SimpleLaserDummy(SimpleLaserInterface):
         return self.lstate
 
     def set_laser_state(self, state):
-        """ Set laser state.
-
-        @param LaserState state: desired laser state enum
         """
+Set the laser state.
+
+Parameters
+----------
+state : LaserState
+    Desired laser state enum.
+"""
+
         time.sleep(1)
         self.lstate = state
         return self.lstate
@@ -184,10 +214,15 @@ class SimpleLaserDummy(SimpleLaserInterface):
         return self.shutter
 
     def set_shutter_state(self, state):
-        """ Set laser shutter state.
-
-        @param ShutterState state: desired laser shutter state
         """
+Set the laser shutter state.
+
+Parameters
+----------
+state : ShutterState
+    Desired laser shutter state.
+"""
+
         time.sleep(1)
         self.shutter = state
         return self.shutter

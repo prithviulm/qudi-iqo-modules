@@ -143,32 +143,36 @@ class AWG5002C(PulserInterface):
 
     def get_constraints(self):
         """
-        Retrieve the hardware constrains from the Pulsing device.
+    Retrieve the hardware constrains from the Pulsing device.
 
-        @return constraints object: object with pulser constraints as attributes.
+    Returns
+    -------
+    constraints object
+        Object with pulser constraints as attributes.
 
-        Provides all the constraints (e.g. sample_rate, amplitude, total_length_bins,
-        channel_config, ...) related to the pulse generator hardware to the caller.
+    Provides all the constraints (e.g. sample_rate, amplitude, total_length_bins,
+    channel_config, ...) related to the pulse generator hardware to the caller.
 
-            SEE PulserConstraints CLASS IN pulser_interface.py FOR AVAILABLE CONSTRAINTS!!!
+    SEE PulserConstraints CLASS IN pulser_interface.py FOR AVAILABLE CONSTRAINTS!!!
 
-        If you are not sure about the meaning, look in other hardware files to get an impression.
-        If still additional constraints are needed, then they have to be added to the
-        PulserConstraints class.
+    If you are not sure about the meaning, look in other hardware files to get an impression.
+    If still additional constraints are needed, then they have to be added to the
+    PulserConstraints class.
 
-        Each scalar parameter is an ScalarConstraints object defined in cor.util.interfaces.
-        Essentially it contains min/max values as well as min step size, default value and unit of
-        the parameter.
+    Each scalar parameter is an ScalarConstraints object defined in cor.util.interfaces.
+    Essentially it contains min/max values as well as min step size, default value and unit of
+    the parameter.
 
-        PulserConstraints.activation_config differs, since it contain the channel
-        configuration/activation information of the form:
-            {<descriptor_str>: <channel_list>,
-             <descriptor_str>: <channel_list>,
-             ...}
+    PulserConstraints.activation_config differs, since it contain the channel
+    configuration/activation information of the form:
+        {<descriptor_str>: <channel_list>,
+         <descriptor_str>: <channel_list>,
+         ...}
 
-        If the constraints cannot be set in the pulsing hardware (e.g. because it might have no
-        sequence mode) just leave it out so that the default is used (only zeros).
-        """
+    If the constraints cannot be set in the pulsing hardware (e.g. because it might have no
+    sequence mode) just leave it out so that the default is used (only zeros).
+    """
+
         constraints = PulserConstraints()
 
         # The file formats are hardware specific.
@@ -253,10 +257,14 @@ class AWG5002C(PulserInterface):
     def pulser_on(self):
         """ Switches the pulsing device on.
 
-        @return int: error code (0:OK, -1:error, higher number corresponds to
-                                 current status of the device. Check then the
-                                 class variable status_dic.)
-        """
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error, higher number corresponds to
+        current status of the device. Check then the
+        class variable status_dic.)
+    """
+
 
         self.tell('AWGC:RUN\n')
 
@@ -265,24 +273,35 @@ class AWG5002C(PulserInterface):
     def pulser_off(self):
         """ Switches the pulsing device off.
 
-        @return int: error code (0:OK, -1:error, higher number corresponds to
-                                 current status of the device. Check then the
-                                 class variable status_dic.)
-        """
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error, higher number corresponds to
+        current status of the device. Check then the
+        class variable status_dic.)
+    """
+
         self.tell('AWGC:STOP\n')
 
         return self.get_status()[0]
 
     def upload_asset(self, asset_name=None):
         """ Upload an already hardware conform file to the device.
-        Does NOT load into channels.
+    Does NOT load into channels.
 
-        @param str asset_name: name of the ensemble/sequence to be uploaded
+    Parameters
+    ----------
+    asset_name : str, optional
+        Name of the ensemble/sequence to be uploaded.
 
-        @return int: error code (0:OK, -1:error)
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error)
 
-        If nothing is passed, method will be skipped.
-        """
+    If nothing is passed, method will be skipped.
+    """
+
 
         if asset_name is None:
             self.log.warning('No asset name provided for upload!\nCorrect that!\n'
@@ -313,15 +332,22 @@ class AWG5002C(PulserInterface):
 
     def _send_file(self, filename):
         """ Sends an already hardware specific waveform file to the pulse
-            generators waveform directory.
+    generators waveform directory.
 
-        @param string filename: The file name of the source file
+    Parameters
+    ----------
+    filename : str
+        The file name of the source file.
 
-        @return int: error code (0:OK, -1:error)
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error)
 
-        Unused for digital pulse generators without sequence storage capability
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without sequence storage capability
+    (PulseBlaster, FPGA).
+    """
+
 
         filepath = os.path.join(self.host_waveform_directory, filename)
 
@@ -333,26 +359,34 @@ class AWG5002C(PulserInterface):
 
     def load_asset(self, asset_name, load_dict=None):
         """ Loads a sequence or waveform to the specified channel of the pulsing
-            device.
+    device.
 
-        @param str asset_name: The name of the asset to be loaded
+    Parameters
+    ----------
+    asset_name : str
+        The name of the asset to be loaded.
 
-        @param dict load_dict:  a dictionary with keys being one of the
-                                available channel numbers and items being the
-                                name of the already sampled
-                                waveform/sequence files.
-                                Examples:   {1: rabi_Ch1, 2: rabi_Ch2}
-                                            {1: rabi_Ch2, 2: rabi_Ch1}
-                                This parameter is optional. If none is given
-                                then the channel association is invoked from
-                                the sequence generation,
-                                i.e. the filename appendix (_Ch1, _Ch2 etc.)
+    load_dict : dict, optional
+        A dictionary with keys being one of the
+        available channel numbers and items being the
+        name of the already sampled
+        waveform/sequence files.
+        Examples: {1: rabi_Ch1, 2: rabi_Ch2}
+                  {1: rabi_Ch2, 2: rabi_Ch1}
+        This parameter is optional. If none is given
+        then the channel association is invoked from
+        the sequence generation,
+        i.e. the filename appendix (_Ch1, _Ch2 etc.)
 
-        @return int: error code (0:OK, -1:error)
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error)
 
-        Unused for digital pulse generators without sequence storage capability
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without sequence storage capability
+    (PulseBlaster, FPGA).
+    """
+
 
         if load_dict is None:
             load_dict = {}
@@ -410,20 +444,28 @@ class AWG5002C(PulserInterface):
     def get_loaded_asset(self):
         """ Retrieve the currently loaded asset name of the device.
 
-        @return str: Name of the current asset, that can be either a filename
-                     a waveform, a sequence ect.
-        """
+    Returns
+    -------
+    str
+        Name of the current asset, that can be either a filename
+        a waveform, a sequence etc.
+    """
+
         return self.current_loaded_asset
 
     def clear_all(self):
         """ Clears the loaded waveform from the pulse generators RAM.
 
-        @return int: error code (0:OK, -1:error)
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error)
 
-        Delete all waveforms and sequences from Hardware memory and clear the
-        visual display. Unused for digital pulse generators without sequence
-        storage capability (PulseBlaster, FPGA).
-        """
+    Delete all waveforms and sequences from Hardware memory and clear the
+    visual display. Unused for digital pulse generators without sequence
+    storage capability (PulseBlaster, FPGA).
+    """
+
 
         self.tell('WLIST:WAVEFORM:DELETE ALL\n')
         self.current_loaded_asset = ''
@@ -432,15 +474,19 @@ class AWG5002C(PulserInterface):
     def get_status(self):
         """ Retrieves the status of the pulsing hardware
 
-        @return (int, dict): inter value of the current status with the
-                             corresponding dictionary containing status
-                             description for all the possible status variables
-                             of the pulse generator hardware.
-                0 indicates that the instrument has stopped.
-                1 indicates that the instrument is running.
-                2 indicates that the instrument is waiting for trigger.
-               -1 indicates that the request of the status for AWG has failed.
-        """
+    Returns
+    -------
+    tuple
+        (int, dict): inter value of the current status with the
+        corresponding dictionary containing status
+        description for all the possible status variables
+        of the pulse generator hardware.
+        0 indicates that the instrument has stopped.
+        1 indicates that the instrument is running.
+        2 indicates that the instrument is waiting for trigger.
+        -1 indicates that the request of the status for AWG has failed.
+    """
+
 
         status_dic = {-1: 'Failed Request or Failed Communication with device.',
                       0: 'Device has stopped, but can receive commands.', 1: 'Device is active and running.',
@@ -467,11 +513,15 @@ class AWG5002C(PulserInterface):
     def get_sample_rate(self):
         """ Get the sample rate of the pulse generator hardware
 
-        @return float: The current sample rate of the device (in Hz)
+    Returns
+    -------
+    float
+        The current sample rate of the device (in Hz)
 
-        Do not return a saved sample rate in a class variable, but instead
-        retrieve the current sample rate directly from the device.
-        """
+    Do not return a saved sample rate in a class variable, but instead
+    retrieve the current sample rate directly from the device.
+    """
+
 
         self._sample_rate = float(self.ask('SOURCE1:FREQUENCY?'))
         return self._sample_rate
@@ -479,14 +529,20 @@ class AWG5002C(PulserInterface):
     def set_sample_rate(self, sample_rate):
         """ Set the sample rate of the pulse generator hardware.
 
-        @param float sample_rate: The sampling rate to be set (in Hz)
+    Parameters
+    ----------
+    sample_rate : float
+        The sampling rate to be set (in Hz)
 
-        @return float: the sample rate returned from the device.
+    Returns
+    -------
+    float
+        The sample rate returned from the device.
 
-        Note: After setting the sampling rate of the device, retrieve it again
-              for obtaining the actual set value and use that information for
-              further processing.
-        """
+    Note: After setting the sampling rate of the device, retrieve it again
+          for obtaining the actual set value and use that information for
+          further processing.
+    """
 
         self.tell('SOURCE1:FREQUENCY {0:.4G}MHz\n'.format(sample_rate/1e6))
         time.sleep(0.2)
@@ -495,40 +551,48 @@ class AWG5002C(PulserInterface):
     def get_analog_level(self, amplitude=None, offset=None):
         """ Retrieve the analog amplitude and offset of the provided channels.
 
-        @param list amplitude: optional, if a specific amplitude value (in Volt
-                               peak to peak, i.e. the full amplitude) of a
-                               channel is desired.
-        @param list offset: optional, if a specific high value (in Volt) of a
-                            channel is desired.
+    Parameters
+    ----------
+    amplitude : list, optional
+        If a specific amplitude value (in Volt
+        peak to peak, i.e. the full amplitude) of a
+        channel is desired.
+    offset : list, optional
+        If a specific high value (in Volt) of a
+        channel is desired.
 
-        @return: (dict, dict): tuple of two dicts, with keys being the channel
-                               number and items being the values for those
-                               channels. Amplitude is always denoted in
-                               Volt-peak-to-peak and Offset in (absolute)
-                               Voltage.
+    Returns
+    -------
+    tuple
+        (dict, dict): tuple of two dicts, with keys being the channel
+        number and items being the values for those
+        channels. Amplitude is always denoted in
+        Volt-peak-to-peak and Offset in (absolute)
+        Voltage.
 
-        Note: Do not return a saved amplitude and/or offset value but instead
-              retrieve the current amplitude and/or offset directly from the
-              device.
+    Note: Do not return a saved amplitude and/or offset value but instead
+          retrieve the current amplitude and/or offset directly from the
+          device.
 
-        If no entries provided then the levels of all channels where simply
-        returned. If no analog channels provided, return just an empty dict.
-        Example of a possible input:
-            amplitude = [1,4], offset =[1,3]
-        to obtain the amplitude of channel 1 and 4 and the offset
-            {1: -0.5, 4: 2.0} {}
-        since no high request was performed.
+    If no entries provided then the levels of all channels where simply
+    returned. If no analog channels provided, return just an empty dict.
+    Example of a possible input:
+        amplitude = [1,4], offset =[1,3]
+    to obtain the amplitude of channel 1 and 4 and the offset
+        {1: -0.5, 4: 2.0} {}
+    since no high request was performed.
 
-        The major difference to digital signals is that analog signals are
-        always oscillating or changing signals, otherwise you can use just
-        digital output. In contrast to digital output levels, analog output
-        levels are defined by an amplitude (here total signal span, denoted in
-        Voltage peak to peak) and an offset (a value around which the signal
-        oscillates, denoted by an (absolute) voltage).
+    The major difference to digital signals is that analog signals are
+    always oscillating or changing signals, otherwise you can use just
+    digital output. In contrast to digital output levels, analog output
+    levels are defined by an amplitude (here total signal span, denoted in
+    Voltage peak to peak) and an offset (a value around which the signal
+    oscillates, denoted by an (absolute) voltage).
 
-        In general there is no bijective correspondence between
-        (amplitude, offset) and (value high, value low)!
-        """
+    In general there is no bijective correspondence between
+    (amplitude, offset) and (value high, value low)!
+    """
+
         if amplitude is None:
             amplitude = []
         if offset is None:
@@ -563,32 +627,40 @@ class AWG5002C(PulserInterface):
     def set_analog_level(self, amplitude=None, offset=None):
         """ Set amplitude and/or offset value of the provided analog channel.
 
-        @param dict amplitude: dictionary, with key being the channel and items
-                               being the amplitude values (in Volt peak to peak,
-                               i.e. the full amplitude) for the desired channel.
-        @param dict offset: dictionary, with key being the channel and items
-                            being the offset values (in absolute volt) for the
-                            desired channel.
+    Parameters
+    ----------
+    amplitude : dict, optional
+        Dictionary, with key being the channel and items
+        being the amplitude values (in Volt peak to peak,
+        i.e. the full amplitude) for the desired channel.
+    offset : dict, optional
+        Dictionary, with key being the channel and items
+        being the offset values (in absolute volt) for the
+        desired channel.
 
-        @return (dict, dict): tuple of two dicts with the actual set values for
-                              amplitude and offset.
+    Returns
+    -------
+    tuple
+        (dict, dict): tuple of two dicts with the actual set values for
+        amplitude and offset.
 
-        If nothing is passed then the command will return two empty dicts.
+    If nothing is passed then the command will return two empty dicts.
 
-        Note: After setting the analog and/or offset of the device, retrieve
-              them again for obtaining the actual set value(s) and use that
-              information for further processing.
+    Note: After setting the analog and/or offset of the device, retrieve
+          them again for obtaining the actual set value(s) and use that
+          information for further processing.
 
-        The major difference to digital signals is that analog signals are
-        always oscillating or changing signals, otherwise you can use just
-        digital output. In contrast to digital output levels, analog output
-        levels are defined by an amplitude (here total signal span, denoted in
-        Voltage peak to peak) and an offset (a value around which the signal
-        oscillates, denoted by an (absolute) voltage).
+    The major difference to digital signals is that analog signals are
+    always oscillating or changing signals, otherwise you can use just
+    digital output. In contrast to digital output levels, analog output
+    levels are defined by an amplitude (here total signal span, denoted in
+    Voltage peak to peak) and an offset (a value around which the signal
+    oscillates, denoted by an (absolute) voltage).
 
-        In general there is no bijective correspondence between
-        (amplitude, offset) and (value high, value low)!
-        """
+    In general there is no bijective correspondence between
+    (amplitude, offset) and (value high, value low)!
+    """
+
         if amplitude is None:
             amplitude = {}
         if offset is None:
@@ -629,38 +701,46 @@ class AWG5002C(PulserInterface):
     def get_digital_level(self, low=None, high=None):
         """ Retrieve the digital low and high level of the provided channels.
 
-        @param list low: optional, if a specific low value (in Volt) of a
-                         channel is desired.
-        @param list high: optional, if a specific high value (in Volt) of a
-                          channel is desired.
+    Parameters
+    ----------
+    low : list, optional
+        If a specific low value (in Volt) of a
+        channel is desired.
+    high : list, optional
+        If a specific high value (in Volt) of a
+        channel is desired.
 
-        @return: (dict, dict): tuple of two dicts, with keys being the channel
-                               number and items being the values for those
-                               channels. Both low and high value of a channel is
-                               denoted in (absolute) Voltage.
+    Returns
+    -------
+    tuple
+        (dict, dict): tuple of two dicts, with keys being the channel
+        number and items being the values for those
+        channels. Both low and high value of a channel is
+        denoted in (absolute) Voltage.
 
-        Note: Do not return a saved low and/or high value but instead retrieve
-              the current low and/or high value directly from the device.
+    Note: Do not return a saved low and/or high value but instead retrieve
+          the current low and/or high value directly from the device.
 
-        If no entries provided then the levels of all channels where simply
-        returned. If no digital channels provided, return just an empty dict.
+    If no entries provided then the levels of all channels where simply
+    returned. If no digital channels provided, return just an empty dict.
 
-        Example of a possible input:
-            low = [1,4]
-        to obtain the low voltage values of digital channel 1 an 4. A possible
-        answer might be
-            {1: -0.5, 4: 2.0} {}
-        since no high request was performed.
+    Example of a possible input:
+        low = [1,4]
+    to obtain the low voltage values of digital channel 1 an 4. A possible
+    answer might be
+        {1: -0.5, 4: 2.0} {}
+    since no high request was performed.
 
-        The major difference to analog signals is that digital signals are
-        either ON or OFF, whereas analog channels have a varying amplitude
-        range. In contrast to analog output levels, digital output levels are
-        defined by a voltage, which corresponds to the ON status and a voltage
-        which corresponds to the OFF status (both denoted in (absolute) voltage)
+    The major difference to analog signals is that digital signals are
+    either ON or OFF, whereas analog channels have a varying amplitude
+    range. In contrast to analog output levels, digital output levels are
+    defined by a voltage, which corresponds to the ON status and a voltage
+    which corresponds to the OFF status (both denoted in (absolute) voltage)
 
-        In general there is no bijective correspondence between
-        (amplitude, offset) and (value high, value low)!
-        """
+    In general there is no bijective correspondence between
+    (amplitude, offset) and (value high, value low)!
+    """
+
         if low is None:
             low = []
         if high is None:
@@ -706,30 +786,38 @@ class AWG5002C(PulserInterface):
     def set_digital_level(self, low=None, high=None):
         """ Set low and/or high value of the provided digital channel.
 
-        @param dict low: dictionary, with key being the channel and items being
-                         the low values (in volt) for the desired channel.
-        @param dict high: dictionary, with key being the channel and items being
-                         the high values (in volt) for the desired channel.
+    Parameters
+    ----------
+    low : dict, optional
+        Dictionary, with key being the channel and items being
+        the low values (in volt) for the desired channel.
+    high : dict, optional
+        Dictionary, with key being the channel and items being
+        the high values (in volt) for the desired channel.
 
-        @return (dict, dict): tuple of two dicts where first dict denotes the
-                              current low value and the second dict the high
-                              value.
+    Returns
+    -------
+    tuple
+        (dict, dict): tuple of two dicts where first dict denotes the
+        current low value and the second dict the high
+        value.
 
-        If nothing is passed then the command will return two empty dicts.
+    If nothing is passed then the command will return two empty dicts.
 
-        Note: After setting the high and/or low values of the device, retrieve
-              them again for obtaining the actual set value(s) and use that
-              information for further processing.
+    Note: After setting the high and/or low values of the device, retrieve
+          them again for obtaining the actual set value(s) and use that
+          information for further processing.
 
-        The major difference to analog signals is that digital signals are
-        either ON or OFF, whereas analog channels have a varying amplitude
-        range. In contrast to analog output levels, digital output levels are
-        defined by a voltage, which corresponds to the ON status and a voltage
-        which corresponds to the OFF status (both denoted in (absolute) voltage)
+    The major difference to analog signals is that digital signals are
+    either ON or OFF, whereas analog channels have a varying amplitude
+    range. In contrast to analog output levels, digital output levels are
+    defined by a voltage, which corresponds to the ON status and a voltage
+    which corresponds to the OFF status (both denoted in (absolute) voltage)
 
-        In general there is no bijective correspondence between
-        (amplitude, offset) and (value high, value low)!
-        """
+    In general there is no bijective correspondence between
+    (amplitude, offset) and (value high, value low)!
+    """
+
         if low is None:
             low = {}
         if high is None:
@@ -780,20 +868,27 @@ class AWG5002C(PulserInterface):
     def get_active_channels(self, ch=None):
         """ Get the active channels of the pulse generator hardware.
 
-        @param list ch: optional, if specific analog or digital channels are
-                        needed to be asked without obtaining all the channels.
+    Parameters
+    ----------
+    ch : list, optional
+        If specific analog or digital channels are
+        needed to be asked without obtaining all the channels.
 
-        @return dict:  where keys denoting the channel number and items boolean
-                       expressions whether channel are active or not.
+    Returns
+    -------
+    dict
+        Where keys denoting the channel number and items boolean
+        expressions whether channel are active or not.
 
-        Example for an possible input (order is not important):
-            ch = ['a_ch2', 'd_ch2', 'a_ch1', 'd_ch5', 'd_ch1']
-        then the output might look like
-            {'a_ch2': True, 'd_ch2': False, 'a_ch1': False, 'd_ch5': True, 'd_ch1': False}
+    Example for an possible input (order is not important):
+        ch = ['a_ch2', 'd_ch2', 'a_ch1', 'd_ch5', 'd_ch1']
+    then the output might look like
+        {'a_ch2': True, 'd_ch2': False, 'a_ch1': False, 'd_ch5': True, 'd_ch1': False}
 
-        If no parameters are passed to this method all channels will be asked
-        for their setting.
-        """
+    If no parameters are passed to this method all channels will be asked
+    for their setting.
+    """
+
         if ch is None:
             ch = []
 
@@ -841,37 +936,44 @@ class AWG5002C(PulserInterface):
 
     def set_active_channels(self, ch=None):
         """
-        Set the active/inactive channels for the pulse generator hardware.
-        The state of ALL available analog and digital channels will be returned
-        (True: active, False: inactive).
-        The actually set and returned channel activation must be part of the available
-        activation_configs in the constraints.
-        You can also activate/deactivate subsets of available channels but the resulting
-        activation_config must still be valid according to the constraints.
-        If the resulting set of active channels can not be found in the available
-        activation_configs, the channel states must remain unchanged.
+    Set the active/inactive channels for the pulse generator hardware.
+    The state of ALL available analog and digital channels will be returned
+    (True: active, False: inactive).
+    The actually set and returned channel activation must be part of the available
+    activation_configs in the constraints.
+    You can also activate/deactivate subsets of available channels but the resulting
+    activation_config must still be valid according to the constraints.
+    If the resulting set of active channels can not be found in the available
+    activation_configs, the channel states must remain unchanged.
 
-        @param dict ch: dictionary with keys being the analog or digital string generic names for
-                        the channels (i.e. 'd_ch1', 'a_ch2') with items being a boolean value.
-                        True: Activate channel, False: Deactivate channel
+    Parameters
+    ----------
+    ch : dict, optional
+        Dictionary with keys being the analog or digital string generic names for
+        the channels (i.e. 'd_ch1', 'a_ch2') with items being a boolean value.
+        True: Activate channel, False: Deactivate channel.
 
-        @return dict: with the actual set values for ALL active analog and digital channels
+    Returns
+    -------
+    dict
+        With the actual set values for ALL active analog and digital channels.
 
-        If nothing is passed then the command will simply return the unchanged current state.
+    If nothing is passed then the command will simply return the unchanged current state.
 
-        Note: After setting the active channels of the device, use the returned dict for further
-              processing.
+    Note: After setting the active channels of the device, use the returned dict for further
+          processing.
 
-        Example for possible input:
-            ch={'a_ch2': True, 'd_ch1': False, 'd_ch3': True, 'd_ch4': True}
-        to activate analog channel 2 digital channel 3 and 4 and to deactivate
-        digital channel 1. All other available channels will remain unchanged.
+    Example for possible input:
+        ch={'a_ch2': True, 'd_ch1': False, 'd_ch3': True, 'd_ch4': True}
+    to activate analog channel 2 digital channel 3 and 4 and to deactivate
+    digital channel 1. All other available channels will remain unchanged.
 
-        AWG5000 Series instruments support only 14-bit resolution. Therefore
-        this command will have no effect on the DAC for these instruments. On
-        other devices the deactivation of digital channels increase the DAC
-        resolution of the analog channels.
-        """
+    AWG5000 Series instruments support only 14-bit resolution. Therefore
+    this command will have no effect on the DAC for these instruments. On
+    other devices the deactivation of digital channels increases the DAC
+    resolution of the analog channels.
+    """
+
         if ch is None:
             ch = {}
 
@@ -900,12 +1002,16 @@ class AWG5002C(PulserInterface):
     def get_uploaded_asset_names(self):
         """ Retrieve the names of all uploaded assets on the device.
 
-        @return list: List of all uploaded asset name strings in the current
-                      device directory.
+    Returns
+    -------
+    list
+        List of all uploaded asset name strings in the current
+        device directory.
 
-        Unused for digital pulse generators without sequence storage capability
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without sequence storage capability
+    (PulseBlaster, FPGA).
+    """
+
         uploaded_files = self._get_filenames_on_device()
         name_list = []
         for filename in uploaded_files:
@@ -919,11 +1025,15 @@ class AWG5002C(PulserInterface):
 
     def get_saved_asset_names(self):
         """ Retrieve the names of all sampled and saved assets on the host PC.
-        This is no list of the file names.
+    This is no list of the file names.
 
-        @return list: List of all saved asset name strings in the current
-                      directory of the host PC.
-        """
+    Returns
+    -------
+    list
+        List of all saved asset name strings in the current
+        directory of the host PC.
+    """
+
         # list of all files in the waveform directory ending with .wfm
         file_list = self._get_filenames_on_host()
         # exclude the channel specifier for multiple analog channels and create return list
@@ -937,16 +1047,23 @@ class AWG5002C(PulserInterface):
 
     def delete_asset(self, asset_name):
         """ Delete all files associated with an asset with the passed
-            asset_name from the device memory.
+    asset_name from the device memory.
 
-        @param str asset_name: The name of the asset to be deleted
-                               Optionally a list of asset names can be passed.
+    Parameters
+    ----------
+    asset_name : str
+        The name of the asset to be deleted.
+        Optionally a list of asset names can be passed.
 
-        @return list: a list with strings of the files which were deleted.
+    Returns
+    -------
+    list
+        A list with strings of the files which were deleted.
 
-        Unused for digital pulse generators without sequence storage capability
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without sequence storage capability
+    (PulseBlaster, FPGA).
+    """
+
         if not isinstance(asset_name, list):
             asset_name = [asset_name]
 
@@ -978,13 +1095,20 @@ class AWG5002C(PulserInterface):
     def set_asset_dir_on_device(self, dir_path):
         """ Change the directory where the assets are stored on the device.
 
-        @param string dir_path: The target directory
+    Parameters
+    ----------
+    dir_path : str
+        The target directory.
 
-        @return int: error code (0:OK, -1:error)
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error)
 
-        Unused for digital pulse generators without changeable file structure
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without changeable file structure
+    (PulseBlaster, FPGA).
+    """
+
 
         # check whether the desired directory exists:
         with FTP(self.ip_address) as ftp:
@@ -1003,51 +1127,73 @@ class AWG5002C(PulserInterface):
     def get_asset_dir_on_device(self):
         """ Ask for the directory where the assets are stored on the device.
 
-        @return string: The current sequence directory
+    Returns
+    -------
+    str
+        The current sequence directory.
 
-        Unused for digital pulse generators without changeable file structure
-        (PulseBlaster, FPGA).
-        """
+    Unused for digital pulse generators without changeable file structure
+    (PulseBlaster, FPGA).
+    """
+
 
         return self.asset_directory
 
     def get_interleave(self):
         """ Check whether Interleave is on in AWG.
-        Unused for pulse generator hardware other than an AWG. The AWG 5000
-        Series does not have an interleave mode and this method exists only for
-        compability reasons.
+    Unused for pulse generator hardware other than an AWG. The AWG 5000
+    Series does not have an interleave mode and this method exists only for
+    compatibility reasons.
 
-        @return bool: will be always False since no interleave functionality
-        """
+    Returns
+    -------
+    bool
+        Will be always False since no interleave functionality.
+    """
+
 
         return False
 
     def set_interleave(self, state=False):
         """ Turns the interleave of an AWG on or off.
 
-        @param bool state: The state the interleave should be set to
-                           (True: ON, False: OFF)
+    Parameters
+    ----------
+    state : bool
+        The state the interleave should be set to
+        (True: ON, False: OFF)
 
-        @return bool: actual interleave status (True: ON, False: OFF)
+    Returns
+    -------
+    bool
+        Actual interleave status (True: ON, False: OFF)
 
-        Note: After setting the interleave of the device, retrieve the
-              interleave again and use that information for further processing.
+    Note: After setting the interleave of the device, retrieve the
+          interleave again and use that information for further processing.
 
-        Unused for pulse generator hardware other than an AWG. The AWG 5000
-        Series does not have an interleave mode and this method exists only for
-        compability reasons.
-        """
+    Unused for pulse generator hardware other than an AWG. The AWG 5000
+    Series does not have an interleave mode and this method exists only for
+    compatibility reasons.
+    """
+
         self.log.warning('Interleave mode not available for the AWG 5000 Series!\n'
                          'Method call will be ignored.')
         return self.get_interleave()
 
     def tell(self, command):
-        """Send a command string to the AWG.
+        """ Send a command string to the AWG.
 
-        @param command: string containing the command
+    Parameters
+    ----------
+    command : str
+        String containing the command.
 
-        @return int: error code (0:OK, -1:error)
-        """
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error).
+    """
+
 
         # check whether the return character was placed at the end. Otherwise
         # the communication will stuck:
@@ -1063,10 +1209,17 @@ class AWG5002C(PulserInterface):
     def ask(self, question):
         """ Asks the device a 'question' and receive an answer from it.
 
-        @param string question: string containing the command
+    Parameters
+    ----------
+    question : str
+        String containing the command.
 
-        @return string: the answer of the device to the 'question'
-        """
+    Returns
+    -------
+    str
+        The answer of the device to the 'question'.
+    """
+
         if not question.endswith('\n'):
             question += '\n'
 
@@ -1091,10 +1244,14 @@ class AWG5002C(PulserInterface):
         return message
 
     def reset(self):
-        """Reset the device.
+        """ Reset the device.
 
-        @return int: error code (0:OK, -1:error)
-        """
+    Returns
+    -------
+    int
+        Error code (0:OK, -1:error).
+    """
+
         self.tell('*RST\n')
 
         return 0
@@ -1107,50 +1264,64 @@ class AWG5002C(PulserInterface):
     def _get_model_ID(self):
         """ Obtain the device identification.
 
-        @return: str representing the model id of the AWG.
-        """
+    Returns
+    -------
+    str
+        Representing the model id of the AWG.
+    """
 
         model_id = self.ask('*IDN?').replace('\n', '').split(',')
         return model_id
 
     def set_lowpass_filter(self, a_ch, cutoff_freq):
-        """ Set a lowpass filter to the analog channels ofawg    the AWG.
+        """ Set a lowpass filter to the analog channels of the AWG.
 
-        @param int a_ch: To which channel to apply, either 1 or 2.
-        @param cutoff_freq: Cutoff Frequency of the lowpass filter in Hz.
-        """
+    Parameters
+    ----------
+    a_ch : int
+        To which channel to apply, either 1 or 2.
+    cutoff_freq : float
+        Cutoff Frequency of the lowpass filter in Hz.
+    """
+
         if a_ch == 1:
             self.tell('OUTPUT1:FILTER:LPASS:FREQUENCY {0:f}MHz\n'.format(cutoff_freq/1e6))
         elif a_ch == 2:
             self.tell('OUTPUT2:FILTER:LPASS:FREQUENCY {0:f}MHz\n'.format(cutoff_freq/1e6))
 
     def set_jump_timing(self, synchronous=False):
-        """Sets control of the jump timing in the AWG.
+        """ Sets control of the jump timing in the AWG.
 
-        @param bool synchronous: if True the jump timing will be set to
-                                 synchornous, otherwise the jump timing will be
-                                 set to asynchronous.
+    Parameters
+    ----------
+    synchronous : bool, optional
+        If True the jump timing will be set to
+        synchronous, otherwise the jump timing will be
+        set to asynchronous.
 
-        If the Jump timing is set to asynchornous the jump occurs as quickly as
-        possible after an event occurs (e.g. event jump tigger), if set to
-        synchornous the jump is made after the current waveform is output. The
-        default value is asynchornous.
-        """
+    If the Jump timing is set to asynchronous the jump occurs as quickly as
+    possible after an event occurs (e.g. event jump trigger), if set to
+    synchronous the jump is made after the current waveform is output. The
+    default value is asynchronous.
+    """
+
         if synchronous:
             self.tell('EVEN:JTIM SYNC\n')
         else:
             self.tell('EVEN:JTIM ASYNC\n')
 
     def set_mode(self, mode):
-        """Change the output mode of the AWG5000 series.
+        """ Change the output mode of the AWG5000 series.
 
-        @param str mode: Options for mode (case-insensitive):
-                            continuous - 'C'
-                            triggered  - 'T'
-                            gated      - 'G'
-                            sequence   - 'S'
-
-        """
+    Parameters
+    ----------
+    mode : str
+        Options for mode (case-insensitive):
+        continuous - 'C'
+        triggered  - 'T'
+        gated      - 'G'
+        sequence   - 'S'
+    """
 
         look_up = {'C': 'CONT',
                    'T': 'TRIG',
@@ -1162,16 +1333,24 @@ class AWG5002C(PulserInterface):
     def get_sequencer_mode(self, output_as_int=False):
         """ Asks the AWG which sequencer mode it is using.
 
-        @param: bool output_as_int: optional boolean variable to set the output
-        @return: str or int with the following meaning:
-                'HARD' or 0 indicates Hardware Mode
-                'SOFT' or 1 indicates Software Mode
-                'Error' or -1 indicates a failure of request
+    Parameters
+    ----------
+    output_as_int : bool, optional
+        Optional boolean variable to set the output.
 
-        It can be either in Hardware Mode or in Software Mode. The optional
-        variable output_as_int sets if the returned value should be either an
-        integer number or string.
-        """
+    Returns
+    -------
+    str or int
+        With the following meaning:
+        'HARD' or 0 indicates Hardware Mode
+        'SOFT' or 1 indicates Software Mode
+        'Error' or -1 indicates a failure of request
+
+    It can be either in Hardware Mode or in Software Mode. The optional
+    variable output_as_int sets if the returned value should be either an
+    integer number or string.
+    """
+
 
         message = self.ask('AWGControl:SEQuencer:TYPE?\n')
         if output_as_int:
@@ -1197,9 +1376,16 @@ class AWG5002C(PulserInterface):
     def _get_dir_for_name(self, name):
         """ Get the path to the pulsed sub-directory 'name'.
 
-        @param str name:  name of the folder
-        @return: str, absolute path to the directory with folder 'name'.
-        """
+    Parameters
+    ----------
+    name : str
+        Name of the folder.
+
+    Returns
+    -------
+    str
+        Absolute path to the directory with folder 'name'.
+    """
 
         path = os.path.join(self._tmp_work_dir, name)
         if not os.path.exists(path):
@@ -1210,8 +1396,12 @@ class AWG5002C(PulserInterface):
     def _get_filenames_on_device(self):
         """ Get the full filenames of all assets saved on the device.
 
-        @return: list, The full filenames of all assets saved on the device.
-        """
+    Returns
+    -------
+    list
+        The full filenames of all assets saved on the device.
+    """
+
         filename_list = []
         with FTP(self.ip_address) as ftp:
             ftp.login()  # login as default user anonymous, passwd anonymous@
@@ -1246,8 +1436,12 @@ class AWG5002C(PulserInterface):
     def _get_filenames_on_host(self):
         """ Get the full filenames of all assets saved on the host PC.
 
-        @return: list, The full filenames of all assets saved on the host PC.
-        """
+    Returns
+    -------
+    list
+        The full filenames of all assets saved on the host PC.
+    """
+
         filename_list = [f for f in os.listdir(self.host_waveform_directory) if
                          f.endswith('.wfm') or f.endswith('.seq')]
         return filename_list
@@ -1255,8 +1449,12 @@ class AWG5002C(PulserInterface):
     def _get_num_a_ch(self):
         """ Retrieve the number of available analog channels.
 
-        @return int: number of analog channels.
-        """
+    Returns
+    -------
+    int
+        Number of analog channels.
+    """
+
         config = self.get_constraints().activation_config
 
         all_a_ch = []
@@ -1276,8 +1474,12 @@ class AWG5002C(PulserInterface):
     def _get_num_d_ch(self):
         """ Retrieve the number of available digital channels.
 
-        @return int: number of digital channels.
-        """
+    Returns
+    -------
+    int
+        Number of digital channels.
+    """
+
         config = self.get_constraints().activation_config
 
         all_d_ch = []

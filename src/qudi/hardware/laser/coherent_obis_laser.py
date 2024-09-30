@@ -64,10 +64,15 @@ class OBISLaser(SimpleLaserInterface):
         self.disconnect_laser()
 
     def connect_laser(self):
-        """ Connect to Instrument.
-
-        @return bool: connection success
         """
+Connect to the instrument.
+
+Returns
+-------
+bool
+    Connection success (True if connected, False otherwise).
+"""
+
         response = self._communicate('*IDN?')[0]
 
         if response.startswith('ERR-100'):
@@ -87,112 +92,186 @@ class OBISLaser(SimpleLaserInterface):
         return frozenset({ControlMode.UNKNOWN})
 
     def get_control_mode(self):
-        """ Get current laser control mode.
-
-        @return ControlMode: current laser control mode
         """
+Get the current laser control mode.
+
+Returns
+-------
+ControlMode
+    Current laser control mode.
+"""
+
         return ControlMode.UNKNOWN
 
     def set_control_mode(self, mode):
-        """ Set laser control mode.
-
-        @param ControlMode mode: desired control mode
-        @return ControlMode: actual control mode
         """
+Set the laser control mode.
+
+Parameters
+----------
+mode : ControlMode
+    Desired control mode.
+
+Returns
+-------
+ControlMode
+    Actual control mode.
+"""
+
         if mode != ControlMode.UNKNOWN:
             self.log.warning(self._model_name + ' does not have control modes, '
                              'cannot set to mode {}'.format(mode))
 
     def get_power(self):
-        """ Get laser power.
-
-        @return float: laser power in watts
         """
+Get the laser power.
+
+Returns
+-------
+float
+    Laser power in watts.
+"""
+
         # The present laser output power in watts
         return float(self._communicate('SOUR:POW:LEV?'))
 
     def get_power_setpoint(self):
-        """ Get the laser power setpoint.
-
-        @return float: laser power setpoint in watts
         """
+Get the laser power setpoint.
+
+Returns
+-------
+float
+    Laser power setpoint in watts.
+"""
+
         # The present laser power level setting in watts (set level)
         return float(self._communicate('SOUR:POW:LEV:IMM:AMPL?'))
 
     def get_power_range(self):
-        """ Get laser power range.
-
-        @return float[2]: laser power range
         """
+Get the laser power range.
+
+Returns
+-------
+float[2]
+    Laser power range.
+"""
+
         minpower = float(self._communicate('SOUR:POW:LIM:LOW?'))
         maxpower = float(self._communicate('SOUR:POW:LIM:HIGH?'))
         return minpower, maxpower
 
     def set_power(self, power):
-        """ Set laser power
-
-        @param float power: desired laser power in watts
         """
+Set the laser power.
+
+Parameters
+----------
+power : float
+    Desired laser power in watts.
+"""
+
         self._communicate('SOUR:POW:LEV:IMM:AMPL {}'.format(power))
 
     def get_current_unit(self):
-        """ Get unit for laser current.
-
-        @return str: unit for laser current
         """
+Get the unit for laser current.
+
+Returns
+-------
+str
+    Unit for laser current.
+"""
+
         return 'A'
 
     def get_current_range(self):
-        """ Get range for laser current.
-
-        @return float[2]: range for laser current
         """
+Get the range for laser current.
+
+Returns
+-------
+float[2]
+    Range for laser current.
+"""
+
         low = self._communicate('SOUR:CURR:LIM:LOW?')
         high = self._communicate('SOUR:CURR:LIM:HIGH?')
         return float(low), float(high)
 
     def get_current(self):
-        """ Cet current laser current
-
-        @return float: current laser current in amps
         """
+Get the current laser current.
+
+Returns
+-------
+float
+    Current laser current in amps.
+"""
+
         return float(self._communicate('SOUR:POW:CURR?'))
 
     def get_current_setpoint(self):
-        """ Current laser current setpoint.
-
-        @return float: laser current setpoint
         """
+Get the current laser current setpoint.
+
+Returns
+-------
+float
+    Laser current setpoint.
+"""
+
         return self._current_setpoint
 
     def set_current(self, current_percent):
-        """ Set laser current setpoint.
-
-        @param float current_percent: laser current setpoint
         """
+Set the laser current setpoint.
+
+Parameters
+----------
+current_percent : float
+    Laser current setpoint.
+"""
+
         self._communicate('SOUR:POW:CURR {}'.format(current_percent))
         self._current_setpoint = current_percent
 
     def get_shutter_state(self):
-        """ Get laser shutter state.
-
-        @return ShutterState: laser shutter state
         """
+Get the laser shutter state.
+
+Returns
+-------
+ShutterState
+    Laser shutter state.
+"""
+
         return ShutterState.NO_SHUTTER
 
     def set_shutter_state(self, state):
-        """ Set the desired laser shutter state.
-
-        @param ShutterState state: desired laser shutter state
         """
+Set the desired laser shutter state.
+
+Parameters
+----------
+state : ShutterState
+    Desired laser shutter state.
+"""
+
         if state not in (ShutterState.NO_SHUTTER, ShutterState.UNKNOWN):
             self.log.warning(self._model_name + ' does not have a shutter')
 
     def get_temperatures(self):
-        """ Get all available temperatures.
-
-        @return dict: dict of temperature names and value
         """
+Get all available temperatures.
+
+Returns
+-------
+dict
+    Dictionary of temperature names and their corresponding values.
+"""
+
         return {
             'Diode': self._get_diode_temperature(),
             'Internal': self._get_internal_temperature(),
@@ -200,10 +279,15 @@ class OBISLaser(SimpleLaserInterface):
         }
 
     def get_laser_state(self):
-        """ Get laser operation state
-
-        @return LaserState: laser state
         """
+Get the laser operation state.
+
+Returns
+-------
+LaserState
+    Laser state.
+"""
+
         state = self._communicate('SOUR:AM:STAT?')
         if 'ON' in state:
             return LaserState.ON
@@ -212,11 +296,20 @@ class OBISLaser(SimpleLaserInterface):
         return LaserState.UNKNOWN
 
     def set_laser_state(self, status):
-        """ Set desited laser state.
-
-        @param LaserState status: desired laser state
-        @return LaserState: actual laser state
         """
+Set the desired laser state.
+
+Parameters
+----------
+status : LaserState
+    Desired laser state.
+
+Returns
+-------
+LaserState
+    Actual laser state.
+"""
+
         if self.get_laser_state() != status:
             if status == LaserState.ON:
                 self._communicate('SOUR:AM:STAT ON')
@@ -224,10 +317,15 @@ class OBISLaser(SimpleLaserInterface):
                 self._communicate('SOUR:AM:STAT OFF')
 
     def get_extra_info(self):
-        """ Extra information from laser.
-
-        @return str: multiple lines of text with information about laser
         """
+Get extra information from the laser.
+
+Returns
+-------
+str
+    Multiple lines of text containing information about the laser.
+"""
+
         return ('System Model Name: '       + self._communicate('SYST:INF:MOD?')    + '\n'
                 'System Manufacture Date: ' + self._communicate('SYST:INF:MDAT?')   + '\n'
                 'System Calibration Date: ' + self._communicate('SYST:INF:CDAT?')   + '\n'
@@ -246,20 +344,33 @@ class OBISLaser(SimpleLaserInterface):
 ########################## communication methods ###############################
 
     def _send(self, message):
-        """ Send a message to to laser
-
-        @param string message: message to be delivered to the laser
         """
+Send a message to the laser.
+
+Parameters
+----------
+message : str
+    Message to be delivered to the laser.
+"""
+
         new_message = message + self.eol
         self.obis.write(new_message.encode())
 
     def _communicate(self, message):
-        """ Send a receive messages with the laser
-
-        @param string message: message to be delivered to the laser
-
-        @returns string response: message received from the laser
         """
+Send and receive messages with the laser.
+
+Parameters
+----------
+message : str
+    Message to be delivered to the laser.
+
+Returns
+-------
+str
+    Message received from the laser.
+"""
+
         self._send(message)
         time.sleep(0.1)
         response_len = self.obis.inWaiting()
@@ -285,32 +396,52 @@ class OBISLaser(SimpleLaserInterface):
 ########################## internal methods ####################################
 
     def _get_diode_temperature(self):
-        """ Get laser diode temperature
-
-        @return float: laser diode temperature
         """
+Get the laser diode temperature.
+
+Returns
+-------
+float
+    Laser diode temperature.
+"""
+
         response = float(self._communicate('SOUR:TEMP:DIOD?').split('C')[0])
         return response
 
     def _get_internal_temperature(self):
-        """ Get internal laser temperature
-
-        @return float: internal laser temperature
         """
+Get the internal laser temperature.
+
+Returns
+-------
+float
+    Internal laser temperature.
+"""
+
         return float(self._communicate('SOUR:TEMP:INT?').split('C')[0])
 
     def _get_baseplate_temperature(self):
-        """ Get laser base plate temperature
-
-        @return float: laser base plate temperature
         """
+Get the laser base plate temperature.
+
+Returns
+-------
+float
+    Laser base plate temperature.
+"""
+
         return float(self._communicate('SOUR:TEMP:BAS?').split('C')[0])
 
     def _get_interlock_status(self):
-        """ Get the status of the system interlock
-
-        @returns bool interlock: status of the interlock
         """
+Get the status of the system interlock.
+
+Returns
+-------
+bool
+    Status of the interlock.
+"""
+
         response = self._communicate('SYST:LOCK?')
 
         if response.lower() == 'ok':

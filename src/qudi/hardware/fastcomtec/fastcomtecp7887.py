@@ -238,21 +238,28 @@ class FastComtec(FastCounterInterface):
         return constraints
 
     def configure(self, bin_width_s, record_length_s, number_of_gates=0, filename=None):
-        """ Configuration of the fast counter.
-
-        @param float bin_width_s: Length of a single time bin in the time trace
-                                  histogram in seconds.
-        @param float record_length_s: Total length of the timetrace/each single
-                                      gate in seconds.
-        @param int number_of_gates: optional, number of gates in the pulse
-                                    sequence. Ignore for not gated counter.
-
-        @return tuple(binwidth_s, record_length_s, number_of_gates):
-                    binwidth_s: float the actual set binwidth in seconds
-                    gate_length_s: the actual record length in seconds
-                    number_of_gates: the number of gated, which are accepted,
-                    None if not-gated
         """
+Configuration of the fast counter.
+
+Parameters
+----------
+bin_width_s : float
+    Length of a single time bin in the time trace histogram in seconds.
+record_length_s : float
+    Total length of the time trace for each single gate in seconds.
+number_of_gates : int, optional
+    Number of gates in the pulse sequence. Ignore for a non-gated counter.
+
+Returns
+-------
+tuple
+    - binwidth_s : float
+        The actual set bin width in seconds.
+    - record_length_s : float
+        The actual record length in seconds.
+    - number_of_gates : int or None
+        The number of gated inputs that are accepted, or None if not gated.
+"""
 
         # when not gated, record length = total sequence length, when gated, record length = laser length.
         # subtract 200 ns to make sure no sequence trigger is missed
@@ -273,13 +280,19 @@ class FastComtec(FastCounterInterface):
 
     def get_status(self):
         """
-        Receives the current status of the Fast Counter and outputs it as return value.
-        0 = unconfigured
-        1 = idle
-        2 = running
-        3 = paused
-        -1 = error state
-        """
+Receive the current status of the Fast Counter and output it as a return value.
+
+Returns
+-------
+int
+    Status of the Fast Counter:
+    - 0: unconfigured
+    - 1: idle
+    - 2: running
+    - 3: paused
+    - -1: error state
+"""
+
         status = AcqStatus()
         self.dll.GetStatusData(ctypes.byref(status), 0)
         if status.started == 1:
@@ -300,22 +313,34 @@ class FastComtec(FastCounterInterface):
 
     def get_current_runtime(self):
         """
-        Returns the current runtime.
-        @return float runtime: in s
-        """
+Return the current runtime.
+
+Returns
+-------
+float
+    Current runtime in seconds.
+"""
+
         status = AcqStatus()
         self.dll.GetStatusData(ctypes.byref(status), 0)
         return status.runtime
 
     def get_current_sweeps(self):
         """
-        Returns the current sweeps.
-        @return int sweeps: in sweeps
+Return the current sweeps.
 
-        The fastcomtec has "start" and "sweep" parameters that are generally equal but might differ depending on the
-        configuration. Here the number of trigger events is called "start". This is what is meant by the "sweep"
-        parameter of the fast_counter interface.
-        """
+Returns
+-------
+int
+    Current sweeps.
+
+Notes
+-----
+The Fastcomtec has "start" and "sweep" parameters that are generally equal but might differ depending on the configuration. 
+Here, the number of trigger events is referred to as "start". This is what is meant by the "sweep" parameter of the 
+fast_counter interface.
+"""
+
         status = AcqStatus()
         self.dll.GetStatusData(ctypes.byref(status), 0)
         return status.stevents  # the number of trigger is named "stevents".
@@ -360,33 +385,49 @@ class FastComtec(FastCounterInterface):
         return status
 
     def get_binwidth(self):
-        """ Returns the width of a single timebin in the timetrace in seconds.
-
-        @return float: current length of a single bin in seconds (seconds/bin)
-
-        The red out bitshift will be converted to binwidth. The binwidth is
-        defined as 2**bitshift*minimal_binwidth.
         """
+Return the width of a single time bin in the time trace in seconds.
+
+Returns
+-------
+float
+    Current length of a single bin in seconds (seconds/bin).
+
+Notes
+-----
+The readout bitshift will be converted to bin width. The bin width is defined as 
+2**bitshift * minimal_binwidth.
+"""
+
         return self.minimal_binwidth*(2**int(self.get_bitshift()))
 
     def is_gated(self):
-        """ Check the gated counting possibility.
-
-        @return bool: Boolean value indicates if the fast counter is a gated
-                      counter (TRUE) or not (FALSE).
         """
+Check the gated counting possibility.
+
+Returns
+-------
+bool
+    Boolean value indicating if the fast counter is a gated counter (True) or not (False).
+"""
+
         return self.gated
 
     def get_data_trace(self):
         """
-        Polls the current timetrace data from the fast counter and returns it as a numpy array (dtype = int64).
-        The binning specified by calling configure() must be taken care of in this hardware class.
-        A possible overflow of the histogram bins must be caught here and taken care of.
-        If the counter is UNgated it will return a 1D-numpy-array with returnarray[timebin_index]
-        If the counter is gated it will return a 2D-numpy-array with returnarray[gate_index, timebin_index]
+Poll the current time trace data from the fast counter and return it as a numpy array (dtype = int64).
 
-          @return arrray: Time trace.
-        """
+The binning specified by calling `configure()` must be handled in this hardware class. 
+Any possible overflow of the histogram bins must be managed here.
+
+Returns
+-------
+array
+    If the counter is ungated, it will return a 1D numpy array with 
+    `returnarray[timebin_index]`. If the counter is gated, it will return a 
+    2D numpy array with `returnarray[gate_index, timebin_index]`.
+"""
+
         setting = AcqSettings()
         self.dll.GetSettingData(ctypes.byref(setting), 0)
         N = setting.range
@@ -425,37 +466,59 @@ class FastComtec(FastCounterInterface):
     # =========================================================================
 
     def get_bitshift(self):
-        """Get bitshift from Fastcomtec.
-
-        @return int settings.bitshift: the red out bitshift
         """
+Get the bitshift from Fastcomtec.
+
+Returns
+-------
+int
+    The readout bitshift from settings.
+"""
 
         settings = AcqSettings()
         self.dll.GetSettingData(ctypes.byref(settings), 0)
         return int(settings.bitshift)
 
     def set_bitshift(self, bitshift):
-        """ Sets the bitshift properly for this card.
-
-        @param int bitshift:
-
-        @return int: asks the actual bitshift and returns the red out value
         """
+Set the bitshift properly for this card.
+
+Parameters
+----------
+bitshift : int
+    The bitshift value to set.
+
+Returns
+-------
+int
+    Asks the actual bitshift and returns the readout value.
+"""
+
 
         cmd = 'BITSHIFT={0}'.format(bitshift)
         self.dll.RunCmd(0, bytes(cmd, 'ascii'))
         return self.get_bitshift()
 
     def set_binwidth(self, binwidth):
-        """ Set defined binwidth in Card.
-
-        @param float binwidth: the current binwidth in seconds
-
-        @return float: Red out bitshift converted to binwidth
-
-        The binwidth is converted into to an appropiate bitshift defined as
-        2**bitshift*minimal_binwidth.
         """
+Set the defined bin width in the card.
+
+Parameters
+----------
+binwidth : float
+    The current bin width in seconds.
+
+Returns
+-------
+float
+    The readout bitshift converted to bin width.
+
+Notes
+-----
+The bin width is converted into an appropriate bitshift defined as 
+2**bitshift * minimal_binwidth.
+"""
+
         bitshift = int(np.log2(binwidth/self.minimal_binwidth))
         new_bitshift=self.set_bitshift(bitshift)
 
@@ -463,12 +526,20 @@ class FastComtec(FastCounterInterface):
 
     #TODO: Check such that only possible lengths are set.
     def set_length(self, length_bins, preset=None, cycles=None, sequences=None):
-        """ Sets the length of the length of the actual measurement.
-
-        @param int length_bins: Length of the measurement in bins
-
-        @return float: Red out length of measurement
         """
+Set the length of the actual measurement.
+
+Parameters
+----------
+length_bins : int
+    Length of the measurement in bins.
+
+Returns
+-------
+float
+    The readout length of the measurement.
+"""
+
         constraints = self.get_constraints()
         if length_bins * self.get_binwidth() < constraints['max_sweep_len']:
             cmd = 'RANGE={0}'.format(int(length_bins))
@@ -501,10 +572,15 @@ class FastComtec(FastCounterInterface):
         return cycles
 
     def get_length(self):
-        """ Get the length of the current measurement.
-
-          @return int: length of the current measurement
         """
+Get the length of the current measurement.
+
+Returns
+-------
+int
+    Length of the current measurement.
+"""
+
         setting = AcqSettings()
         self.dll.GetSettingData(ctypes.byref(setting), 0)
         return int(setting.range)
@@ -537,24 +613,43 @@ class FastComtec(FastCounterInterface):
         return gated
 
     def change_save_mode(self, mode):
-        """ Changes the save mode of p7887
-
-        @param int mode: Specifies the save mode (0: No Save at Halt, 1: Save at Halt,
-                        2: Write list file, No Save at Halt, 3: Write list file, Save at Halt
-
-        @return int mode: specified save mode
         """
+Change the save mode of P7887.
+
+Parameters
+----------
+mode : int
+    Specifies the save mode:
+    - 0: No Save at Halt
+    - 1: Save at Halt
+    - 2: Write list file, No Save at Halt
+    - 3: Write list file, Save at Halt
+
+Returns
+-------
+int
+    Specified save mode.
+"""
+
         cmd = 'savedata={0}'.format(mode)
         self.dll.RunCmd(0, bytes(cmd, 'ascii'))
         return mode
 
     def set_delay_start(self, delay_s):
-        """ Sets the record delay length
-
-        @param int delay_s: Record delay after receiving a start trigger
-
-        @return int mode: specified save mode
         """
+Set the record delay length.
+
+Parameters
+----------
+delay_s : int
+    Record delay after receiving a start trigger.
+
+Returns
+-------
+int
+    Specified save mode.
+"""
+
 
         # A delay can only be adjusted in steps of 6.4ns
         delay_bins = np.rint(delay_s / 6.4e-9 /2.5)
@@ -563,10 +658,15 @@ class FastComtec(FastCounterInterface):
         return delay_bins
 
     def get_delay_start(self):
-        """ Returns the current record delay length
-
-        @return float delay_s: current record delay length in seconds
         """
+Return the current record delay length.
+
+Returns
+-------
+float
+    Current record delay length in seconds.
+"""
+
         bsetting = AcqSettings()
         self.dll.GetSettingData(ctypes.byref(bsetting), 0)
         delay_s = bsetting.fstchan * 6.4e-9 *2.5

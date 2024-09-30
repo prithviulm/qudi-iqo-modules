@@ -196,10 +196,15 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
             self._ni_finite_sampling_io().stop_buffered_frame()
 
     def get_constraints(self):
-        """ Get hardware constraints/limitations.
-
-        @return dict: scanner constraints
         """
+Get hardware constraints/limitations.
+
+Returns
+-------
+dict
+    Scanner constraints.
+"""
+
         return self._constraints
 
     def reset(self):
@@ -208,14 +213,23 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
         pass
 
     def configure_scan(self, scan_settings):
-        """ Configure the hardware with all parameters needed for a 1D or 2D scan.
-
-        @param dict scan_settings: scan_settings dictionary holding all the parameters 'axes', 'resolution', 'ranges'
-        #  TODO update docstring in interface
-
-        @return (bool, ScanSettings): Failure indicator (fail=True),
-                                      altered ScanSettings instance (same as "settings")
         """
+Configure the hardware with all parameters needed for a 1D or 2D scan.
+
+Parameters
+----------
+scan_settings : dict
+    Dictionary holding all the parameters, including 'axes', 'resolution', and 'ranges'.
+
+Returns
+-------
+tuple
+    - bool
+        Failure indicator (True if failed).
+    - ScanSettings
+        Altered ScanSettings instance (same as "settings").
+"""
+
 
         if self.is_scan_running:
             self.log.error('Unable to configure scan parameters while scan is running. '
@@ -348,25 +362,35 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
         return end_pos
 
     def get_target(self):
-        """ Get the current target position of the scanner hardware
-        (i.e. the "theoretical" position).
-
-        @return dict: current target position per axis.
         """
+Get the current target position of the scanner hardware 
+(i.e., the "theoretical" position).
+
+Returns
+-------
+dict
+    Current target position per axis.
+"""
+
         if self.is_scan_running:
             return self._stored_target_pos
         else:
             return self._target_pos
 
     def get_position(self):
-        """ Get a snapshot of the actual scanner position (i.e. from position feedback sensors).
-        For the same target this value can fluctuate according to the scanners positioning accuracy.
-
-        For scanning devices that do not have position feedback sensors, simply return the target
-        position (see also: ScanningProbeInterface.get_target).
-
-        @return dict: current position per axis.
         """
+Get a snapshot of the actual scanner position (i.e., from position feedback sensors).
+For the same target, this value can fluctuate according to the scanner's positioning accuracy.
+
+For scanning devices that do not have position feedback sensors, simply return the target 
+position (see also: ScanningProbeInterface.get_target).
+
+Returns
+-------
+dict
+    Current position per axis.
+"""
+
         with self._thread_lock_cursor:
             if not self._ao_setpoint_channels_active:
                 self._toggle_ao_setpoint_channels(True)
@@ -395,9 +419,12 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
     @QtCore.Slot()
     def _start_scan(self):
         """
+Returns
+-------
+bool
+    Failure indicator (True if failed).
+"""
 
-        @return (bool): Failure indicator (fail=True)
-        """
         try:
             if self._scan_data is None:
                 # todo: raising would be better, but from this delegated thread exceptions get lost
@@ -428,9 +455,16 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
 
     def stop_scan(self):
         """
-        @return bool: Failure indicator (fail=True)
-        # todo: return values as error codes are deprecated
-        """
+Returns
+-------
+bool
+    Failure indicator (True if failed).
+
+Notes
+-----
+Returning values as error codes is deprecated.
+"""
+
 
         #self.log.debug("Stopping scan")
         if self.thread() is not QtCore.QThread.currentThread():
@@ -463,10 +497,16 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
 
     def get_scan_data(self):
         """
+Returns
+-------
+ScanData
+    ScanData instance used in the scan.
 
-        @return (ScanData): ScanData instance used in the scan
-        #  TODO change interface
-        """
+Notes
+-----
+The interface is subject to change.
+"""
+
 
         if self._scan_data is None:
             raise RuntimeError('ScanData is not yet configured, please call "configure_scan" first')
@@ -479,7 +519,6 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
     def emergency_stop(self):
         """
 
-        @return:
         """
         # TODO: Implement. Yet not used in logic till yet? Maybe sth like this:
         # self._ni_finite_sampling_io().terminate_all_tasks()
@@ -489,10 +528,14 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
     @property
     def is_scan_running(self):
         """
-        Read-only flag indicating the module state.
+Read-only flag indicating the module state.
 
-        @return bool: scanning probe is running (True) or not (False)
-        """
+Returns
+-------
+bool
+    True if the scanning probe is running, False otherwise.
+"""
+
         # module state used to indicate hw timed scan running
         #self.log.debug(f"Module in state: {self.module_state()}")
         #assert self.module_state() in ('locked', 'idle')  # TODO what about other module states?
@@ -555,13 +598,22 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
 
     def _position_to_voltage(self, axis, positions):
         """
-        @param str axis: scanner axis name for which the position is to be converted to voltages
-        @param np.array/single value position(s): Position (value(s)) to convert to voltage(s) of corresponding
-        ni_channel derived from axis string
+Convert the scanner position to voltages.
 
-        @return np.array/single value: Position(s) converted to voltage(s) (value(s)) [single value & 1D np.array depending on input]
-                      for corresponding ni_channel (keys)
-        """
+Parameters
+----------
+axis : str
+    Scanner axis name for which the position is to be converted to voltages.
+position : np.array or single value
+    Position (value(s)) to convert to voltage(s) corresponding to the 
+    NI channel derived from the axis string.
+
+Returns
+-------
+np.array or single value
+    Position(s) converted to voltage(s) (value(s)). This can be a single value 
+    or a 1D numpy array depending on the input, for the corresponding NI channel (keys).
+"""
 
         ni_channel = self._ni_channel_mapping[axis]
         voltage_range = self._ni_finite_sampling_io().constraints.output_channel_limits[ni_channel]
@@ -595,11 +647,20 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
 
     def _voltage_dict_to_position_dict(self, voltages):
         """
-        @param dict voltages: Voltages (value(s)) to convert to position(s) of corresponding scanner axis (keys)
+Convert voltages to scanner positions.
 
-        @return dict: Voltage(s) converted to position(s) (value(s)) [single value & 1D np.array depending on input] for
-                      for corresponding axis (keys)
-        """
+Parameters
+----------
+voltages : dict
+    Voltages (value(s)) to convert to position(s) of the corresponding scanner axis (keys).
+
+Returns
+-------
+dict
+    Position(s) (value(s)) converted from voltage(s). This can be a single value or a 1D numpy array 
+    depending on the input, for the corresponding axis (keys).
+"""
+
 
         reverse_routing = {val.lower(): key for key, val in self._ni_channel_mapping.items()}
 
@@ -751,11 +812,20 @@ class NiScanningProbeInterfuseBare(ScanningProbeInterface):
 
     def _init_ni_scan_arrays(self, scan_data):
         """
-        @param ScanData scan_data: The desired ScanData instance
+Retrieve voltage data for the specified scan.
 
-        @return dict: Where keys coincide with the ni_channel for the current scan axes and values are the
-                      corresponding voltage 1D numpy arrays for each axis
-        """
+Parameters
+----------
+scan_data : ScanData
+    The desired ScanData instance.
+
+Returns
+-------
+dict
+    A dictionary where keys coincide with the NI channel for the current scan axes, and values are 
+    the corresponding voltage 1D numpy arrays for each axis.
+"""
+
 
         # TODO adjust toolchain to incorporate __backwards_line_resolution in settings?
         # TODO maybe need to clip to voltage range in case of float precision error in conversion?

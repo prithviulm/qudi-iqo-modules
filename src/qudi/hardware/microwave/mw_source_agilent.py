@@ -110,61 +110,90 @@ class MicrowaveAgilent(MicrowaveInterface):
 
     @property
     def constraints(self):
-        """The microwave constraints object for this device.
-
-        @return MicrowaveConstraints:
         """
+The microwave constraints object for this device.
+
+Returns
+-------
+MicrowaveConstraints
+"""
+
         return self._constraints
 
     @property
     def is_scanning(self):
-        """Read-Only boolean flag indicating if a scan is running at the moment. Can be used
-        together with module_state() to determine if the currently running microwave output is a
-        scan or CW. Should return False if module_state() is 'idle'.
-
-        @return bool: Flag indicating if a scan is running (True) or not (False)
         """
+Read-Only boolean flag indicating if a scan is running at the moment. Can be used
+together with module_state() to determine if the currently running microwave output is a
+scan or CW. Should return False if module_state() is 'idle'.
+
+Returns
+-------
+bool
+    Flag indicating if a scan is running (True) or not (False).
+"""
+
         with self._thread_lock:
             return self._is_scanning()
 
     @property
     def cw_power(self):
-        """The CW microwave power in dBm.
-
-        @return float: The currently set CW microwave power in dBm.
         """
+The CW microwave power in dBm.
+
+Returns
+-------
+float
+    The currently set CW microwave power in dBm.
+"""
+
         with self._thread_lock:
             return float(self._device.query(':AMPL:CW?'))
 
     @property
     def cw_frequency(self):
-        """The CW microwave frequency in Hz. Must implement setter as well.
-
-        @return float: The currently set CW microwave frequency in Hz.
         """
+The CW microwave frequency in Hz. Must implement setter as well.
+
+Returns
+-------
+float
+    The currently set CW microwave frequency in Hz.
+"""
+
         with self._thread_lock:
             return float(self._device.query(':FREQ:CW?'))
 
     @property
     def scan_power(self):
-        """The microwave power in dBm used for scanning.
-
-        @return float: The currently set scanning microwave power in dBm
         """
+The microwave power in dBm used for scanning.
+
+Returns
+-------
+float
+    The currently set scanning microwave power in dBm.
+"""
+
         with self._thread_lock:
             return self._scan_power
 
     @property
     def scan_frequencies(self):
-        """The microwave frequencies used for scanning. Must implement setter as well.
-
-        In case of scan_mode == SamplingOutputMode.JUMP_LIST, this will be a 1D numpy array.
-        In case of scan_mode == SamplingOutputMode.EQUIDISTANT_SWEEP, this will be a tuple
-        containing 3 values (freq_begin, freq_end, number_of_samples).
-        If no frequency scan has been specified, return None.
-
-        @return float[]: The currently set scanning frequencies. None if not set.
         """
+The microwave frequencies used for scanning. Must implement setter as well.
+
+In case of scan_mode == SamplingOutputMode.JUMP_LIST, this will be a 1D numpy array.
+In case of scan_mode == SamplingOutputMode.EQUIDISTANT_SWEEP, this will be a tuple
+containing 3 values (freq_begin, freq_end, number_of_samples).
+If no frequency scan has been specified, return None.
+
+Returns
+-------
+float[] or None
+    The currently set scanning frequencies. Returns None if not set.
+"""
+
         with self._thread_lock:
             return self._scan_frequencies
 
@@ -187,12 +216,18 @@ class MicrowaveAgilent(MicrowaveInterface):
             return self._scan_sample_rate
 
     def set_cw(self, frequency, power):
-        """Configure the CW microwave output. Does not start physical signal output, see also
-        "cw_on".
-
-        @param float frequency: frequency to set in Hz
-        @param float power: power to set in dBm
         """
+Configure the CW microwave output. Does not start physical signal output, see also
+"cw_on".
+
+Parameters
+----------
+frequency : float
+    Frequency to set in Hz.
+power : float
+    Power to set in dBm.
+"""
+
         with self._thread_lock:
             if self.module_state() != 'idle':
                 raise RuntimeError('Unable to set CW parameters. Microwave output active.')
@@ -352,11 +387,16 @@ class MicrowaveAgilent(MicrowaveInterface):
                     time.sleep(0.2)
 
     def _command_wait(self, command_str):
-        """ Writes the command in command_str via PyVisa and waits until the device has finished
-        processing it.
-
-        @param str command_str: The command to be written
         """
+Writes the command in command_str via PyVisa and waits until the device has finished
+processing it.
+
+Parameters
+----------
+command_str : str
+    The command to be written.
+"""
+
         self._device.write(command_str)
         self._device.write('*WAI')
         while int(float(self._device.query('*OPC?'))) != 1:

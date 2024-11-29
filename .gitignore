@@ -89,6 +89,7 @@ docs/logic/_autosummary/
 docs/hardware/_autosummary/
 docs/interface/_autosummary/
 docs/util/_autosummary/
+docs/api
 # Jupyter Notebook
 .ipynb_checkpoints
 

@@ -8,7 +8,7 @@
 
 import os
 import sys
-
+from sphinx.application import Sphinx
 sys.path.insert(0, os.path.abspath("../src/qudi/"))
 
 project = "qudi-iqo-modules"
@@ -23,14 +23,31 @@ author = "Ulm IQO"
 # 'IPython.sphinxext.ipython_directive',
 extensions = [
     'numpydoc',
-    'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest', 
-    "sphinx_design",
-    'sphinx.ext.coverage'
+    'sphinx_design',
+    'sphinx.ext.coverage',
+    'sphinx.ext.napoleon', 
+    'autoapi.extension'
 ]
+
+
+autoapi_dirs = [ '../src']
+autoapi_type = 'python'               # Specify that we are documenting Python code
+autoapi_generate_api_docs = True      # Automatically generate API docs
+autoapi_add_toctree_entry = True      # Add entries to the TOC tree
+autoapi_options = [
+    'members',
+    'undoc-members',
+    'show-inheritance',
+    'imported-members'
+]
+autoapi_keep_files = True             # Keep generated .rst files for debugging
+autoapi_root = 'api'                  # Root directory for generated API documentation
+
+
 intersphinx_mapping = {
     "PySide2": (
         "https://doc.qt.io/qtforpython-5",
@@ -45,7 +62,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
 autosummary_generate = True
 autosummary_ignore_module_all = False
 autosummary_imported_members = False
-autodoc_mock_imports = ["lmfit"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -83,28 +99,32 @@ numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
 
-# Example autodoc settings
-autodoc_default_options = {
-    'members': True,    # Document all members (methods and attributes)
-    'undoc-members': False,   # Include members without docstrings
-    'show-inheritance': True,
-    'inherited-members': False   # Show inheritance links
-    # Other options as needed
-}
-
 intersphinx_mapping = {
     'core': ('https://qudi-core-testing.readthedocs.io/en/george/', None),
 }
 
 
-# This gives the full name of the inherited classes in the documentation. It would be better if we could
-# just reference the documentation externally with intersphinx but it's not working correctly. Sphinx
-# ends up documenting the entire inherited base class instead of just linking to it. It could be a problem
-# caused by numpydoc, not sure yet.
-def process_bases(app, name, obj, options, bases):
-    for i, base in enumerate(bases):
-        bases[i] = ":py:class:`" + base.__module__ + "." + base.__name__ + "`"
+def process_docstring(
+    app,
+    what,
+    name,
+    obj,
+    options, 
+    lines
+):
+    if what in {"module",'package'} :
+        orig_lines = lines[:]
+        new_lines = []
+        for line in orig_lines:
+            if 'Copyright' in line:
+                break
+            new_lines.append(line)
 
+        lines[:] = new_lines
+        if lines and lines[-1]:
+            lines.append('')
+         
 
-def setup(app):
-    app.connect("autodoc-process-bases", process_bases)
+def setup(sphinx):
+    sphinx.connect("autodoc-process-docstring", process_docstring) 
+   

@@ -1,6 +1,6 @@
-Interface
-=========
+# Interface
 
+```{eval-rst}
 .. autosummary::
     :caption: Interface Modules
     :toctree: _autosummary
@@ -25,3 +25,4 @@ Interface
     qudi.interface.switch_interface
     qudi.interface.test_interface
     qudi.interface.mixins.process_control_switch
+```

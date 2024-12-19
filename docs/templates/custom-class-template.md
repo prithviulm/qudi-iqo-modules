@@ -1,11 +1,13 @@
-..
-   BLESS THIS GUY
-   https://stackoverflow.com/questions/2701998/automatically-document-all-modules-recursively-with-sphinx-autodoc/62613202#62613202
+% BLESS THIS GUY
+% https://stackoverflow.com/questions/2701998/automatically-document-all-modules-recursively-with-sphinx-autodoc/62613202#62613202
 
 {{ fullname | escape | underline}}
 
+```{eval-rst}
 .. currentmodule:: {{ module }}
+```
 
+```{eval-rst}
 .. autoclass:: {{ objname }}
    :members:
    :show-inheritance:
@@ -34,3 +36,4 @@
    {%- endfor %}
    {% endif %}
    {% endblock %}
+```

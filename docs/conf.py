@@ -31,7 +31,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.napoleon', 
     'autoapi.extension',
-   # 'myst_parser'
+    'myst_parser'
 ]
 
 

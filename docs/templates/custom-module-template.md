@@ -1,11 +1,11 @@
-..
-   BLESS THIS GUY
-   https://stackoverflow.com/questions/2701998/automatically-document-all-modules-recursively-with-sphinx-autodoc/62613202#62613202
+% BLESS THIS GUY
+% https://stackoverflow.com/questions/2701998/automatically-document-all-modules-recursively-with-sphinx-autodoc/62613202#62613202
 
 {{ fullname | escape | underline}}
 
+```{eval-rst}
 .. automodule:: {{ fullname }}
-  
+
    {% block attributes %}
    {% if attributes %}
    .. rubric:: Module Attributes
@@ -54,17 +54,23 @@
    {%- endfor %}
    {% endif %}
    {% endblock %}
+```
 
 {% block modules %}
 {% if modules %}
 .. rubric:: Modules
 
+```{eval-rst}
 .. autosummary::
    :toctree:
    :template: custom-module-template.rst
    :recursive:
+```
+
 {% for item in modules %}
-   {{ item }}
+
+: {{ item }}
+
 {%- endfor %}
 {% endif %}
 {% endblock %}

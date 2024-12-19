@@ -1,6 +1,6 @@
-Util
-====
+# Util
 
+```{eval-rst}
 .. autosummary::
     :caption: Utility Modules
     :toctree: _autosummary
@@ -9,3 +9,4 @@ Util
 
     qudi.util.benchmark
     qudi.util.enums
+```

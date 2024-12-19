@@ -1,20 +1,19 @@
-Welcome to Qudi IQO Modules's documentation!
-============================================
+# Welcome to Qudi IQO Modules's documentation!
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Documentation Sections
-    :hidden:
-    
-    
+```{toctree}
+:caption: Documentation Sections
+:hidden: true
+:maxdepth: 2
 
-    getting_started/index
-    examples/index
-    development/index
-    api_reference/index
+getting_started/index
+examples/index
+development/index
+api_reference/index
+```
 
 Qudi is a suite of tools for operating multi-instrument and multi-computer laboratory experiments. Originally built around confocal fluorescence microscope experiments, it has grown to be a generally applicable framework for controlling experiments.
 
+```{eval-rst}
 .. grid:: 1 1 2 2
     :gutter: 2 3 4 4
 
@@ -50,7 +49,7 @@ Qudi is a suite of tools for operating multi-instrument and multi-computer labor
 
         .. button-ref:: release
             :expand:
-            :color: primary 
+            :color: primary
             :click-parent:
 
             Go to Development Guide
@@ -87,15 +86,15 @@ Qudi is a suite of tools for operating multi-instrument and multi-computer labor
 
         .. button-ref:: api
             :expand:
-            :color: primary 
+            :color: primary
             :click-parent:
 
             Go to API Reference
 
-    
-Indices and tables
-==================
+```
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+# Indices and tables
+
+- {ref}`genindex`
+- {ref}`modindex`
+- {ref}`search`

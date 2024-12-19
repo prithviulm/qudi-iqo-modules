@@ -1,6 +1,6 @@
-Logic
-=====
+# Logic
 
+```{eval-rst}
 .. autosummary::
     :caption: Logic Modules
     :toctree: _autosummary
@@ -36,3 +36,4 @@ Logic
     qudi.logic.pulsed.pulsed_analysis_methods.basic_analysis_methods
     qudi.logic.pulsed.pulse_extraction_methods.basic_extraction_methods
     qudi.logic.pulsed.sampling_function_defs.basic_sampling_functions
+```

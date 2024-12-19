@@ -1,12 +1,12 @@
-GUI
-===
+# GUI
 
+```{eval-rst}
 .. autosummary::
     :caption: Qudi GUI
     :toctree: _autosummary
     :template: custom-module-template.rst
     :recursive:
-    
+
 
 
     qudi.gui.camera.camera_settings_dialog
@@ -48,6 +48,6 @@ GUI
     qudi.gui.time_series.main_window
     qudi.gui.time_series.settings_dialog
     qudi.gui.time_series.time_series_gui
-   
 
-    
+
+```

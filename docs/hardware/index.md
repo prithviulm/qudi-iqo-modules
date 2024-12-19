@@ -1,6 +1,6 @@
-Hardware
-========
+# Hardware
 
+```{eval-rst}
 .. autosummary::
     :caption: Hardware Modules
     :toctree: _autosummary
@@ -84,3 +84,4 @@ Hardware
     qudi.hardware.wavemeter.high_finesse_proxy
     qudi.hardware.wavemeter.high_finesse_wavemeter
     qudi.hardware.wavemeter.high_finesse_wrapper
+```

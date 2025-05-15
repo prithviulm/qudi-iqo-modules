@@ -85,10 +85,10 @@ default_dark_mode = False  # For sphinx_rtd_dark_mode. Dark mode needs tweaking 
 
 # Example autodoc settings
 autodoc_default_options = {
-    'members': True,    # Document all members (methods and attributes)
-    'undoc-members': False,   # Include members without docstrings
-    'show-inheritance': True,
-    'inherited-members': False   # Show inheritance links
+    'members': True,   
+    'undoc-members': False,  
+    'show-inheritance': False,
+    'inherited-members': None  
 }
 
 intersphinx_mapping = {
@@ -104,6 +104,27 @@ def process_bases(app, name, obj, options, bases):
     for i, base in enumerate(bases):
         bases[i] = ":py:class:`" + base.__module__ + "." + base.__name__ + "`"
 
+def process_docstring(
+    app,
+    what,
+    name,
+    obj,
+    options, 
+    lines
+):
+    if what in {"module",'package'} :
+        orig_lines = lines[:]
+        new_lines = []
+        for line in orig_lines:
+            if 'Copyright' in line:
+                break
+            new_lines.append(line)
 
+        lines[:] = new_lines
+        if lines and lines[-1]:
+            lines.append('')
+         
 def setup(app):
     app.connect("autodoc-process-bases", process_bases)
+    app.connect("autodoc-process-docstring", process_docstring) 
+
